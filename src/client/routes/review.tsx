@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Bookmark, Download, Play, Quote, TriangleAlert } from "lucide-react";
 import { api, type Cell, type Document, type Review } from "../api";
-import { Badge, Button, Card, Chip, Empty, Eyebrow, Modal, Toolbar, Zone } from "../components/ui";
+import { Badge, Button, Card, Chip, Empty, Eyebrow, Field, Input, Modal, Toolbar, Zone } from "../components/ui";
 
 export default function ReviewGrid() {
   const { id = "" } = useParams();
@@ -11,6 +11,8 @@ export default function ReviewGrid() {
   const [cells, setCells] = useState<Cell[]>([]);
   const [open, setOpen] = useState<{ cell: Cell; document: Document; question: string } | null>(null);
   const [brief, setBrief] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   async function load() {
@@ -56,11 +58,25 @@ export default function ReviewGrid() {
     }
   }
 
-  async function saveAsWorkflow() {
-    if (!review) return;
-    const name = review.name;
-    await api.createWorkflow({ name, from_review_id: id, description: `Saved from “${review.name}”` });
-    setError("");
+  /**
+   * A review is named for an occasion ("NDA review — round 1"); a workflow is
+   * named for a document type ("NDA review"), because it is going to be picked
+   * from a list months later. Strip the occasion to suggest a reusable name,
+   * then let the user correct it — saving silently under the review's own name
+   * produces a library nobody can navigate.
+   */
+  function suggestedWorkflowName(reviewName: string): string {
+    return reviewName.replace(/\s*[—-]\s*(round|pass|v)\s*\d+\s*$/i, "").trim() || reviewName;
+  }
+
+  async function saveAsWorkflow(name: string) {
+    await api.createWorkflow({
+      name,
+      from_review_id: id,
+      description: `${review?.columns.length ?? 0} columns, saved from a review that worked.`,
+    });
+    setSaving(false);
+    setSaved(name);
   }
 
   const byKey = new Map(cells.map((c) => [`${c.document_id}:${c.column_id}`, c]));
@@ -77,7 +93,10 @@ export default function ReviewGrid() {
             : undefined
         }
       >
-        <Button onClick={saveAsWorkflow} title="Save these columns as a reusable workflow">
+        <Button
+          onClick={() => setSaving(true)}
+          title="Reuse this review's questions on the next matter"
+        >
           <Bookmark className="size-4" />
           Save as workflow
         </Button>
@@ -171,6 +190,47 @@ export default function ReviewGrid() {
       </div>
 
       <CitationModal open={open} onClose={() => setOpen(null)} />
+
+      <Modal open={saving} onClose={() => setSaving(false)} title="Save as workflow">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const name = String(new FormData(e.currentTarget).get("name") ?? "").trim();
+            if (name) void saveAsWorkflow(name);
+          }}
+        >
+          <div className="space-y-3 p-5">
+            <p className="text-xs text-muted">
+              Saves this review's {columns.length} questions — not its answers — so the next matter can start from
+              them in one click.
+            </p>
+            <Field label="Workflow name" hint="Name it for the document type, not this matter.">
+              <Input name="name" required defaultValue={suggestedWorkflowName(review?.name ?? "")} />
+            </Field>
+          </div>
+          <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
+            <Button onClick={() => setSaving(false)}>Cancel</Button>
+            <Button type="submit" variant="primary">
+              Save workflow
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={saved !== null} onClose={() => setSaved(null)} title="Saved">
+        <div className="p-5 text-[0.8125rem]">
+          <p>
+            <strong className="font-semibold">{saved}</strong> is now in your workflows. Starting a review on any
+            matter can begin from it.
+          </p>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
+          <Button onClick={() => setSaved(null)}>Close</Button>
+          <Link to="/workflows">
+            <Button variant="primary">View workflows</Button>
+          </Link>
+        </div>
+      </Modal>
 
       <Modal open={brief !== null} onClose={() => setBrief(null)} title="Hand this to your agent">
         <div className="p-5">
