@@ -64,9 +64,12 @@ create table if not exists review_columns (
   review_id text not null references reviews (id) on delete cascade,
   position  integer not null default 0,
   key       text not null,                            -- stable handle the agent writes against
-  question  text not null,
+  question  text not null,                            -- the grid header; short
+  -- The detailed instruction for whoever answers the column. Imported column
+  -- sets put their real substance here — several sentences of what to look for
+  -- — so this is sent to the agent alongside the question, never just stored.
   hint      text not null default '',
-  type      text not null default 'text',             -- text | enum | date | money | boolean
+  type      text not null default 'text',             -- text | enum | date | money | percentage | bulleted_list | boolean
   options   text not null default ''                  -- comma-separated, enum only
 );
 create unique index if not exists idx_columns_key on review_columns (review_id, key);
@@ -96,11 +99,20 @@ create index if not exists idx_cells_review on review_cells (review_id, status);
 
 -- A saved column set. This is what turns one lawyer's proven prompt into
 -- something a junior runs in one click.
+-- A workflow imported from a bundled pack is a *copy*, not a reference: review
+-- criteria are the firm's work product, so an upstream revision must never
+-- retroactively change what a matter was reviewed against. These columns record
+-- where the copy came from, which is also what the upstream MIT licence and its
+-- PROVENANCE.md require us to preserve.
 create table if not exists workflows (
   id           text primary key,
   name         text not null,
   description  text not null default '',
   columns_json text not null default '[]',
+  source_pack  text not null default '',              -- bundled pack id, '' when hand-written
+  source_url   text not null default '',
+  author       text not null default '',
+  license      text not null default '',
   created_at   text not null default (datetime('now'))
 );
 create index if not exists idx_workflows_created on workflows (created_at desc);

@@ -3,6 +3,7 @@ import { get, query, run } from "./db.js";
 import { verifyQuote, type PageText } from "./citations.js";
 import { extract, isSupported, UnsupportedFileError } from "./extract.js";
 import { toCsv } from "./export.js";
+import { catalogue, findPack } from "./packs.js";
 import { dispatchAvailable, dispatchTask, listAgentServers, reviewBrief } from "./agent.js";
 
 type Env = {
@@ -101,8 +102,14 @@ const ColumnInput = z.object({
     .regex(/^[a-z0-9_]+$/, "lowercase letters, digits and underscores only")
     .openapi({ description: "Stable handle the agent writes answers against, e.g. governing_law" }),
   question: z.string().min(1).openapi({ description: "The question asked of every document" }),
-  hint: z.string().optional().openapi({ description: "Extra guidance for whoever answers it" }),
-  type: z.enum(["text", "enum", "date", "money", "boolean"]).optional(),
+  hint: z
+    .string()
+    .optional()
+    .openapi({
+      description:
+        "The detailed instruction for this column — what to look for, what to note. Sent to the agent with the question, so this is where the substance belongs.",
+    }),
+  type: z.enum(["text", "enum", "date", "money", "percentage", "bulleted_list", "boolean"]).optional(),
   options: z.string().optional().openapi({ description: "Comma-separated allowed values (enum only)" }),
 });
 
@@ -960,8 +967,8 @@ app.openapi(runReview, async (c) => {
   );
   if (!review) return c.json({ error: "No such review" } as never, 404);
 
-  const columns = await query<{ key: string; question: string }>(
-    "SELECT key, question FROM review_columns WHERE review_id = ? ORDER BY position",
+  const columns = await query<{ key: string; question: string; hint: string; type: string; options: string }>(
+    "SELECT key, question, hint, type, options FROM review_columns WHERE review_id = ? ORDER BY position",
     [id],
   );
   const documentCount = await countOf("SELECT COUNT(*) AS n FROM documents WHERE matter_id = ? AND extract_status = 'ready'", [
@@ -1081,7 +1088,10 @@ const listWorkflows = createRoute({
 
 app.openapi(listWorkflows, async (c) => {
   const { limit, offset, page } = paginate(c.req.valid("query"));
-  const rows = await query<{ id: string; name: string; description: string; columns_json: string; created_at: string }>(
+  const rows = await query<{
+    id: string; name: string; description: string; columns_json: string;
+    source_pack: string; source_url: string; author: string; license: string; created_at: string;
+  }>(
     "SELECT * FROM workflows ORDER BY created_at DESC, id LIMIT ? OFFSET ?",
     [limit, offset],
   );
@@ -1133,6 +1143,73 @@ app.openapi(createWorkflow, async (c) => {
     JSON.stringify(columns),
   ]);
   return c.json({ id, name: body.name } as never, 201);
+});
+
+const listPacks = createRoute({
+  method: "get",
+  path: "/api/workflow-packs",
+  tags: ["Workflows"],
+  summary: "The bundled library of review column sets",
+  description:
+    "A small fixed catalogue, so it returns every entry. Columns are omitted here — import a pack, or read one, to get them.",
+  responses: {
+    200: ok(
+      "The bundled packs",
+      z.object({
+        packs: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            description: z.string(),
+            practice: z.string(),
+            jurisdictions: z.string(),
+            column_count: z.number().int(),
+            author: z.string(),
+            license: z.string(),
+            source_url: z.string(),
+          }),
+        ),
+      }),
+    ),
+  },
+});
+
+app.openapi(listPacks, async (c) => c.json({ packs: catalogue() } as never));
+
+const importPack = createRoute({
+  method: "post",
+  path: "/api/workflow-packs/{id}/import",
+  tags: ["Workflows"],
+  summary: "Copy a bundled pack into this firm's workflows",
+  description:
+    "Copies, deliberately: the workflow becomes the firm's to edit, and refreshing the bundled library later cannot change a review that has already been run against it.",
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    201: ok("The imported workflow", z.object({ id: z.string(), name: z.string(), column_count: z.number().int() })),
+    404: fail("No such pack"),
+  },
+});
+
+app.openapi(importPack, async (c) => {
+  const pack = findPack(c.req.valid("param").id);
+  if (!pack) return c.json({ error: "No such pack" } as never, 404);
+
+  const id = uid();
+  await run(
+    `INSERT INTO workflows (id, name, description, columns_json, source_pack, source_url, author, license)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      pack.name,
+      pack.description,
+      JSON.stringify(pack.columns),
+      pack.id,
+      pack.provenance.source_url,
+      pack.provenance.author,
+      pack.provenance.license,
+    ],
+  );
+  return c.json({ id, name: pack.name, column_count: pack.columns.length } as never, 201);
 });
 
 const deleteWorkflow = createRoute({

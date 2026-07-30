@@ -151,9 +151,28 @@ export function reviewBrief(opts: {
   reviewName: string;
   appUrl: string;
   documentCount: number;
-  questions: { key: string; question: string }[];
+  questions: { key: string; question: string; hint?: string; type?: string; options?: string }[];
 }): string {
-  const questionList = opts.questions.map((q) => `  - ${q.key}: ${q.question}`).join("\n");
+  // The hint carries the real instruction — imported column sets put several
+  // sentences of "what to look for" there and only a short label in `question`,
+  // so a brief built from the label alone would throw away the column's whole
+  // substance and ask the agent a two-word question.
+  const questionList = opts.questions
+    .map((q) => {
+      const lines = [`  - ${q.key} — ${q.question}`];
+      if (q.hint) lines.push(`      ${q.hint}`);
+      if (q.type && q.type !== "text") {
+        const shape =
+          q.type === "bulleted_list"
+            ? "answer as a short bulleted list"
+            : q.type === "enum" && q.options
+              ? `answer with one of: ${q.options}`
+              : `answer as a ${q.type.replace("_", " ")}`;
+        lines.push(`      (${shape})`);
+      }
+      return lines.join("\n");
+    })
+    .join("\n");
   return [
     `Run the "${opts.reviewName}" review in Open Counsel (${opts.appUrl}).`,
     ``,

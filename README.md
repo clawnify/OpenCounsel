@@ -28,6 +28,7 @@ The check is mechanical — a normalised substring match against the extracted t
 - **Documents** — PDF, DOCX and plain text. Text is extracted on upload, page by page, and that text is what citations are checked against.
 - **Tabular review** — a grid of documents × questions. Each cell is an answer, the page, and the verbatim quote it came from, one click away.
 - **Three honest cell states** — *answered* (verified), *not addressed* (the document genuinely doesn't say), *unresolved* (evidence failed the check). The third never looks like the first.
+- **A library of review criteria, built in** — 11 practitioner-authored column sets (NDA, credit agreement, commercial lease, SPA, shareholder agreement, LPA, employment, supply, commercial agreement, change-of-control, e-discovery — 166 columns in total), published under the MIT licence by [Open Legal Products](https://github.com/Open-Legal-Products/mike-workflows). Import one and it becomes yours to edit.
 - **Workflows** — save the columns of a review that worked; the next matter starts from it in one click.
 - **CSV export** — the page and quote travel with every answer, so the evidence doesn't get lost when the grid leaves the app.
 
@@ -76,5 +77,7 @@ Or use the button in the [Clawnify app directory](https://app.clawnify.com). Eac
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
+
+The bundled review column sets come from [Open Legal Products' mike-workflows](https://github.com/Open-Legal-Products/mike-workflows), also MIT, vendored at a pinned revision and adapted to this app's column schema. Full attribution and modification notice: [NOTICE.md](NOTICE.md). Refresh them with `node scripts/refresh-packs.mjs`.
 
 This project is an independent implementation and is not affiliated with, derived from, or endorsed by any other legal-AI product.

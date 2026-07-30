@@ -26,9 +26,13 @@ be rejected.
 
 ## Running a review
 
-1. **Get the shape.** `GET /api/reviews/{id}` returns the columns (each has a
-   `key` — that is what you write answers against) and how much of the grid is
-   filled.
+1. **Get the shape.** `GET /api/reviews/{id}` returns the columns and how much
+   of the grid is filled. Each column has a `key` (what you write answers
+   against), a short `question` (the grid header) and a **`hint`** — read the
+   hint. On imported column sets the question is a two-word label like
+   "Remedies" and the hint is the actual instruction: which clauses to look at,
+   what to note, what counts as an answer. Answering from the label alone is
+   how a column comes back technically true and useless.
 2. **List the documents.** `GET /api/matters/{matter_id}/documents`. Skip any
    whose `extract_status` is not `ready`; there is no text to cite.
 3. **Read one document fully.** `GET /api/documents/{id}/pages?from_page=1&limit=5`,
@@ -78,6 +82,16 @@ GET /api/documents/{id}/pages?from_page=1&limit=5   — how you read a document
 Others worth knowing: `POST /api/matters/{id}/reviews` (start a review, from
 `columns` or a `workflow_id`), `POST /api/workflows` with `from_review_id` (save
 a review's columns for reuse).
+
+**Before writing columns yourself, look at the library.** `GET /api/workflow-packs`
+lists bundled column sets written by practitioners — NDA, credit agreement,
+lease, SPA, shareholder agreement, employment and more. If the user asks for a
+review of a document type one of them covers,
+`POST /api/workflow-packs/{id}/import` and start the review from that workflow.
+Columns you invent will be thinner than the ones already there.
+
+Respect the `type` on each column: `bulleted_list` wants a short list, `money`
+a monetary amount, `date` a date. The grid renders them accordingly.
 
 ## How to read failures
 

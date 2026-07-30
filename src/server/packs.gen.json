@@ -1,0 +1,1368 @@
+{
+  "generated_from": {
+    "repository": "https://github.com/Open-Legal-Products/mike-workflows",
+    "revision": "f5f9acedc9d851351cf6635f02bc3f9a7cc5d010"
+  },
+  "packs": [
+    {
+      "id": "nda-tabular-review",
+      "name": "NDA Tabular Review",
+      "description": "Use this workflow to review uploaded documents and extract structured information into this review's columns.",
+      "practice": "General Transactions",
+      "jurisdictions": "General",
+      "columns": [
+        {
+          "key": "direction",
+          "question": "Direction",
+          "hint": "Is this NDA mutual (both parties owe confidentiality obligations to each other) or unilateral (only one party owes confidentiality obligations)? Identify the direction and name the disclosing and receiving party or parties.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "definition_of_confidential_information",
+          "question": "Definition of Confidential Information",
+          "hint": "How is 'Confidential Information' defined in this agreement? Is it broadly or narrowly drafted? Does it require information to be marked as confidential, or is all information shared in connection with the purpose automatically covered? Note any express inclusions or exclusions.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "obligations_of_receiving_party",
+          "question": "Obligations of Receiving Party",
+          "hint": "What are the key obligations of the receiving party in respect of the confidential information? List each obligation (e.g. keep confidential, not disclose to third parties, use only for the permitted purpose, apply a specific standard of care, restrict access to need-to-know personnel).",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "standard_carveouts_present",
+          "question": "Standard Carveouts Present?",
+          "hint": "Does the agreement include the standard carveouts to confidentiality obligations? Answer Yes if the agreement excludes information that: (a) is or becomes publicly available without breach; (b) was already known to the receiving party; (c) is independently developed; and (d) is received from a third party without restriction. Note any carveouts that are missing or are drafted differently from the standard formulation.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "permitted_disclosures",
+          "question": "Permitted Disclosures",
+          "hint": "To whom may the receiving party disclose confidential information? List each category of permitted recipient (e.g. employees, professional advisers, affiliates, financing parties, regulatory authorities). Note whether onward disclosure requires the recipient to be bound by equivalent obligations.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "term_and_duration",
+          "question": "Term and Duration",
+          "hint": "What is the term of this NDA and how long do the confidentiality obligations last? State the initial term of the agreement and the duration of the confidentiality obligations (noting whether they survive termination and for how long).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "return_and_destruction",
+          "question": "Return and Destruction",
+          "hint": "What obligations apply on expiry or termination regarding return or destruction of confidential information? Is there a choice between return and destruction? Must destruction be certified? Are there any retention exceptions (e.g. for regulatory purposes, IT backup systems)?",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "remedies",
+          "question": "Remedies",
+          "hint": "What remedies are available for breach of the confidentiality obligations? Does the agreement acknowledge that damages may be inadequate and that injunctive relief or specific performance is available? Are there any agreed liquidated damages or indemnities for breach?",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "governing_law_and_jurisdiction",
+          "question": "Governing Law and Jurisdiction",
+          "hint": "What governing law applies to this agreement and which courts have jurisdiction? State the chosen law, the forum, and whether jurisdiction is exclusive or non-exclusive.",
+          "type": "text",
+          "options": ""
+        }
+      ],
+      "provenance": {
+        "source_url": "https://github.com/Open-Legal-Products/mike-workflows/tree/f5f9acedc9d851351cf6635f02bc3f9a7cc5d010/tabular-review-workflows/nda-tabular-review",
+        "repository": "https://github.com/Open-Legal-Products/mike-workflows",
+        "revision": "f5f9acedc9d851351cf6635f02bc3f9a7cc5d010",
+        "upstream_path": "tabular-review-workflows/nda-tabular-review",
+        "author": "Open Legal Products",
+        "license": "MIT",
+        "modifications": "Column definitions converted from table-columns.yaml to this app's column schema (format→type, name→question, prompt→hint, derived stable keys). The upstream SKILL.md instruction body is not carried: it directs the model to self-police citations and export .xlsx, whereas this app verifies every citation server-side and renders results in its own grid."
+      }
+    },
+    {
+      "id": "credit-agreement-tabular-review",
+      "name": "Credit Agreement Tabular Review",
+      "description": "Use this workflow to review uploaded documents and extract structured information into this review's columns.",
+      "practice": "Finance",
+      "jurisdictions": "General",
+      "columns": [
+        {
+          "key": "lenders",
+          "question": "Lenders",
+          "hint": "Identify all lenders (or the lender syndicate) named in this agreement. For each, state their full legal name and role (e.g. mandated lead arranger, original lender, agent bank).",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "borrowers",
+          "question": "Borrowers",
+          "hint": "Identify all borrowers named in this agreement, including their full legal name and jurisdiction of incorporation.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "guarantors",
+          "question": "Guarantors",
+          "hint": "Identify all guarantors named in this agreement, including their full legal name and the scope of their guarantee obligation.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "other_parties",
+          "question": "Other Parties",
+          "hint": "Identify any other material parties to this agreement (e.g. facility agent, security agent, hedge counterparties, issuing bank). State their name and role.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "date_of_agreement",
+          "question": "Date of Agreement",
+          "hint": "What is the date of this credit agreement?",
+          "type": "date",
+          "options": ""
+        },
+        {
+          "key": "facility",
+          "question": "Facility",
+          "hint": "List each facility available under this agreement (e.g. Revolving Credit Facility, Term Loan A, Term Loan B, Term Loan C). For each, state the facility type, tranche name, and any key structural features.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "amount",
+          "question": "Amount",
+          "hint": "What is the total committed amount available under this agreement across all facilities? State the amount, currency, and breakdown by tranche if applicable.",
+          "type": "money",
+          "options": ""
+        },
+        {
+          "key": "purpose",
+          "question": "Purpose",
+          "hint": "What is the stated purpose for which borrowings under this agreement may be used? Identify any restrictions on use of proceeds.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "interest",
+          "question": "Interest",
+          "hint": "What interest rate applies to borrowings under this agreement? Identify the applicable rate (e.g. SOFR, EURIBOR, base rate), the margin, any margin ratchet mechanism, and how interest periods are structured.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "commitment_fee",
+          "question": "Commitment Fee",
+          "hint": "Is there a commitment fee or utilisation fee? If so, state the applicable rate, how it is calculated, and on what basis (e.g. undrawn commitment, average utilisation).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "repayment_schedule",
+          "question": "Repayment Schedule",
+          "hint": "Summarise the repayment schedule for each facility. Identify whether repayment is by scheduled instalments or bullet repayment, and state the repayment dates and amounts where specified.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "maturity",
+          "question": "Maturity",
+          "hint": "What is the final maturity date of the facilities under this agreement? If different facilities have different maturities, state each.",
+          "type": "date",
+          "options": ""
+        },
+        {
+          "key": "security",
+          "question": "Security",
+          "hint": "What security is granted or required to be granted under this agreement? List each class of security (e.g. share pledges, fixed and floating charges, real estate mortgages, account pledges) and the assets or entities over which security is taken.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "guarantees",
+          "question": "Guarantees",
+          "hint": "What guarantee obligations are given under or in connection with this agreement? Identify the guarantors, the scope of the guarantee, and any limitations (e.g. up-stream guarantee limitations, guarantor coverage test).",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "financial_covenants",
+          "question": "Financial Covenants",
+          "hint": "What financial covenants are included in this agreement? For each covenant identify the metric (e.g. leverage ratio, interest cover, cashflow cover), the applicable test, the testing frequency, and any equity cure rights.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "events_of_default",
+          "question": "Events of Default",
+          "hint": "List the events of default under this agreement. For each, note any grace periods, materiality thresholds, or cross-default provisions.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "assignment",
+          "question": "Assignment",
+          "hint": "What restrictions or permissions apply to assignment or transfer of rights under this agreement? Identify restrictions on lender transfers (e.g. white/blacklists, borrower consent) and on borrower assignment.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "change_of_control",
+          "question": "Change of Control",
+          "hint": "Is there a change of control provision? If so, what constitutes a change of control, what obligations does it trigger (e.g. mandatory prepayment, cancellation, lender consent), and is there any cure period?",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "prepayment_fee",
+          "question": "Prepayment Fee",
+          "hint": "Are there any prepayment fees, make-whole premiums, or soft-call protections? If so, state the applicable fee, the period during which it applies, and any exceptions (e.g. prepayment from insurance proceeds or asset disposal).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "governing_law",
+          "question": "Governing Law",
+          "hint": "What governing law applies to this agreement? State the jurisdiction and any specific legal system referenced.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "dispute_resolution",
+          "question": "Dispute Resolution",
+          "hint": "How are disputes resolved under this agreement? Identify whether disputes go to litigation or arbitration, the chosen forum or seat, and any submission to jurisdiction provisions.",
+          "type": "text",
+          "options": ""
+        }
+      ],
+      "provenance": {
+        "source_url": "https://github.com/Open-Legal-Products/mike-workflows/tree/f5f9acedc9d851351cf6635f02bc3f9a7cc5d010/tabular-review-workflows/credit-agreement-tabular-review",
+        "repository": "https://github.com/Open-Legal-Products/mike-workflows",
+        "revision": "f5f9acedc9d851351cf6635f02bc3f9a7cc5d010",
+        "upstream_path": "tabular-review-workflows/credit-agreement-tabular-review",
+        "author": "Open Legal Products",
+        "license": "MIT",
+        "modifications": "Column definitions converted from table-columns.yaml to this app's column schema (format→type, name→question, prompt→hint, derived stable keys). The upstream SKILL.md instruction body is not carried: it directs the model to self-police citations and export .xlsx, whereas this app verifies every citation server-side and renders results in its own grid."
+      }
+    },
+    {
+      "id": "commercial-lease-tabular-review",
+      "name": "Commercial Lease Tabular Review",
+      "description": "Use this workflow to review uploaded documents and extract structured information into this review's columns.",
+      "practice": "Real Estate",
+      "jurisdictions": "General",
+      "columns": [
+        {
+          "key": "landlord",
+          "question": "Landlord",
+          "hint": "Who is the landlord under this lease? State the full legal name, jurisdiction of incorporation or registration (if applicable), and any registered address or title number stated.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "tenant",
+          "question": "Tenant",
+          "hint": "Who is the tenant under this lease? State the full legal name, jurisdiction of incorporation or registration (if applicable), and any registered address stated.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "guarantor",
+          "question": "Guarantor",
+          "hint": "Is there a guarantor under this lease? If so, state the guarantor's full legal name and the scope of the guarantee (e.g. full guarantee of the tenant's obligations, or limited to specific obligations). If there is no guarantor, state this explicitly.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "premises",
+          "question": "Premises",
+          "hint": "Describe the premises demised under this lease. Include the address, floor(s), unit reference, net internal area (if stated), and any areas included or excluded from the demise (e.g. common parts, roof, structure, car parking).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "date_of_lease",
+          "question": "Date of Lease",
+          "hint": "What is the date of this lease? If the lease is undated or if the term commencement date differs from the execution date, note both.",
+          "type": "date",
+          "options": ""
+        },
+        {
+          "key": "term",
+          "question": "Term",
+          "hint": "What is the contractual term of this lease? State the length of the term and the term commencement and expiry dates.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "rent",
+          "question": "Rent",
+          "hint": "What is the initial annual rent payable under this lease? State the amount, the currency, the payment frequency (e.g. quarterly in advance), and the payment dates. Note any rent-free period or initial concessionary rent.",
+          "type": "money",
+          "options": ""
+        },
+        {
+          "key": "rent_review",
+          "question": "Rent Review",
+          "hint": "Are there rent review provisions? If so, state the review dates or frequency, the review mechanism (e.g. open market rent review, RPI/CPI indexation, fixed uplift), whether the review is upward-only, any assumptions and disregards applicable to an open market review, and the dispute resolution mechanism if the parties cannot agree the reviewed rent.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "service_charge",
+          "question": "Service Charge",
+          "hint": "Is the tenant liable for a service charge? If so, describe what costs are included within the service charge, the tenant's apportionment or percentage share, any cap on the service charge, and how the service charge is administered and reconciled.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "insurance",
+          "question": "Insurance",
+          "hint": "What are the insurance obligations under this lease? State who insures (landlord or tenant), what risks must be insured, who bears the insurance premium cost, and the tenant's obligations in respect of the landlord's insurance (e.g. not to vitiate the policy, to pay the premium as additional rent).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "permitted_use",
+          "question": "Permitted Use",
+          "hint": "What is the permitted use of the premises under this lease? State the use class or specific use permitted and identify any restrictions on use. Note whether the landlord's consent is required to change use and on what basis consent may be withheld.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "repair_maintenance",
+          "question": "Repair & Maintenance",
+          "hint": "Who is responsible for repair and maintenance of the premises? Describe the extent of the tenant's repairing obligation (e.g. full repairing, internal repairing only, subject to a schedule of condition). State the landlord's repairing obligations, if any, in respect of the structure, exterior, or common parts.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "alterations",
+          "question": "Alterations",
+          "hint": "What alterations may the tenant make to the premises? Distinguish between structural and non-structural alterations. Is landlord consent required, and if so on what basis may it be withheld? Must the tenant reinstate alterations at the end of the term?",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "assignment_subletting",
+          "question": "Assignment & Subletting",
+          "hint": "What rights does the tenant have to assign or sublet the premises? State whether assignment and subletting are permitted with landlord consent, on what grounds consent may be withheld, any conditions to be satisfied (e.g. an authorised guarantee agreement on assignment, rent at no less than the passing rent on subletting), and whether any dealings are prohibited outright.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "break_rights",
+          "question": "Break Rights",
+          "hint": "Are there any break rights in this lease? If so, identify who holds the break right (landlord, tenant, or both), the break date(s), the notice period and form required to exercise the break, and any pre-conditions to effective exercise (e.g. no material breach, vacant possession, payment of all sums due).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "security_of_tenure",
+          "question": "Security of Tenure",
+          "hint": "Does the tenant have statutory security of tenure (e.g. under the Landlord and Tenant Act 1954 in England and Wales, or equivalent legislation in another jurisdiction)? Answer Yes if the lease is contracted in or benefits from security of tenure. Answer No if the lease has been contracted out or if security of tenure does not apply. State the basis for your answer.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "dilapidations",
+          "question": "Dilapidations",
+          "hint": "What dilapidations obligations apply at the end of the term? Describe the tenant's yield-up obligations (e.g. to deliver the premises in repair, to reinstate alterations, to redecorate). Is there a schedule of condition limiting the tenant's liability? Note any dilapidations cap or other limitation on the landlord's claim.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "rent_deposit",
+          "question": "Rent Deposit",
+          "hint": "Is a rent deposit required? If so, state the amount, the period for which it is held, the conditions under which the landlord may draw on it, and the circumstances in which it is returned to the tenant.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "forfeiture_termination",
+          "question": "Forfeiture & Termination",
+          "hint": "What are the landlord's forfeiture or termination rights? Identify the events that entitle the landlord to forfeit the lease (e.g. non-payment of rent after a grace period, material breach of covenant, insolvency) and any notice requirements before forfeiture can be exercised.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "governing_law",
+          "question": "Governing Law",
+          "hint": "What governing law applies to this lease and which courts have jurisdiction over disputes?",
+          "type": "text",
+          "options": ""
+        }
+      ],
+      "provenance": {
+        "source_url": "https://github.com/Open-Legal-Products/mike-workflows/tree/f5f9acedc9d851351cf6635f02bc3f9a7cc5d010/tabular-review-workflows/commercial-lease-tabular-review",
+        "repository": "https://github.com/Open-Legal-Products/mike-workflows",
+        "revision": "f5f9acedc9d851351cf6635f02bc3f9a7cc5d010",
+        "upstream_path": "tabular-review-workflows/commercial-lease-tabular-review",
+        "author": "Open Legal Products",
+        "license": "MIT",
+        "modifications": "Column definitions converted from table-columns.yaml to this app's column schema (format→type, name→question, prompt→hint, derived stable keys). The upstream SKILL.md instruction body is not carried: it directs the model to self-police citations and export .xlsx, whereas this app verifies every citation server-side and renders results in its own grid."
+      }
+    },
+    {
+      "id": "spa-tabular-review",
+      "name": "SPA Tabular Review",
+      "description": "Use this workflow to review uploaded documents and extract structured information into this review's columns.",
+      "practice": "Corporate",
+      "jurisdictions": "General",
+      "columns": [
+        {
+          "key": "parties",
+          "question": "Parties",
+          "hint": "Identify all parties to this share purchase agreement. For each, state their full legal name, jurisdiction of incorporation (if stated), and their role (e.g. seller, buyer, target company, warrantor, guarantor).",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "date",
+          "question": "Date",
+          "hint": "What is the date of this share purchase agreement?",
+          "type": "date",
+          "options": ""
+        },
+        {
+          "key": "transaction",
+          "question": "Transaction",
+          "hint": "Summarise the transaction. What shares or interests are being acquired, in which target company or companies, and what is the nature of the transaction (e.g. 100% acquisition, majority stake, minority investment)?",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "consideration",
+          "question": "Consideration",
+          "hint": "What is the consideration payable under this agreement? State the total headline price, the currency, and the structure (e.g. cash, shares, loan notes, deferred consideration, earnout). If the price is subject to adjustment (e.g. locked box, completion accounts), describe the mechanism.",
+          "type": "money",
+          "options": ""
+        },
+        {
+          "key": "key_conditions_precedent",
+          "question": "Key Conditions Precedent",
+          "hint": "List the key conditions precedent (CPs) to completion. For each CP, state what must be satisfied or waived and by whom. Identify any long-stop date by which CPs must be satisfied.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "completion_date",
+          "question": "Completion Date",
+          "hint": "When does completion occur? State how many business days after satisfaction or waiver of all CPs completion must occur, and/or any fixed outside date for completion. Note whether there is any obligation to complete by a specific date after signing.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "warranties",
+          "question": "Warranties",
+          "hint": "Summarise the warranty package. Who gives the warranties (e.g. seller, management, all sellers jointly and severally)? Are there business warranties and/or title warranties? Identify the scope of any warranty disclosure process and any limitations on warranty claims (e.g. time limits, minimum claim thresholds, aggregate cap).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "indemnities",
+          "question": "Indemnities",
+          "hint": "Are there specific indemnities in this agreement? If so, list the key indemnities given, by whom, and for what potential liabilities (e.g. tax indemnity, environmental indemnity, litigation indemnity). Note any time limits or caps applicable to indemnity claims.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "limitation_of_liability",
+          "question": "Limitation of Liability",
+          "hint": "What limitations on liability apply to warranty and indemnity claims? Identify the aggregate cap (and how it is calculated, e.g. as a percentage of consideration), any separate cap for fundamental warranties or indemnities, minimum claim thresholds (de minimis and basket/deductible), and time limits for bringing claims.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "covenants",
+          "question": "Covenants",
+          "hint": "What restrictive or other covenants are given by the seller or management? Include non-compete, non-solicitation, and non-dealing covenants, stating the scope (activities and geography) and duration of each.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "exclusivity",
+          "question": "Exclusivity",
+          "hint": "Is there an exclusivity or no-shop provision in this agreement? If so, state the period of exclusivity, what activities are restricted (e.g. soliciting competing offers, engaging with third parties), and any carve-outs or break fee arrangements.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "governing_law_and_jurisdiction",
+          "question": "Governing Law and Jurisdiction",
+          "hint": "What governing law applies to this agreement and what courts or arbitral tribunals have jurisdiction? State the chosen law, the forum for disputes, and whether jurisdiction is exclusive or non-exclusive.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "dispute_resolution",
+          "question": "Dispute Resolution",
+          "hint": "How are disputes to be resolved under this agreement? Identify whether disputes go to litigation or arbitration, the chosen seat or forum, the applicable rules (if arbitration), and any mandatory pre-dispute escalation steps.",
+          "type": "text",
+          "options": ""
+        }
+      ],
+      "provenance": {
+        "source_url": "https://github.com/Open-Legal-Products/mike-workflows/tree/f5f9acedc9d851351cf6635f02bc3f9a7cc5d010/tabular-review-workflows/spa-tabular-review",
+        "repository": "https://github.com/Open-Legal-Products/mike-workflows",
+        "revision": "f5f9acedc9d851351cf6635f02bc3f9a7cc5d010",
+        "upstream_path": "tabular-review-workflows/spa-tabular-review",
+        "author": "Open Legal Products",
+        "license": "MIT",
+        "modifications": "Column definitions converted from table-columns.yaml to this app's column schema (format→type, name→question, prompt→hint, derived stable keys). The upstream SKILL.md instruction body is not carried: it directs the model to self-police citations and export .xlsx, whereas this app verifies every citation server-side and renders results in its own grid."
+      }
+    },
+    {
+      "id": "shareholder-agreement-tabular-review",
+      "name": "Shareholder Agreement Tabular Review",
+      "description": "Use this workflow to review uploaded documents and extract structured information into this review's columns.",
+      "practice": "Corporate",
+      "jurisdictions": "General",
+      "columns": [
+        {
+          "key": "parties",
+          "question": "Parties",
+          "hint": "Identify all parties to this shareholder agreement. For each, state their full legal name, jurisdiction of incorporation or establishment (if stated), and their role (e.g. company, majority shareholder, minority shareholder, investor, founder, management shareholder).",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "date",
+          "question": "Date",
+          "hint": "What is the date of this shareholder agreement?",
+          "type": "date",
+          "options": ""
+        },
+        {
+          "key": "share_capital_classes",
+          "question": "Share Capital & Classes",
+          "hint": "What classes of shares are in issue or contemplated by this agreement? For each class, describe the key rights attaching to it including voting rights, dividend rights, liquidation preference (if any), and any conversion or redemption features.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "shareholdings",
+          "question": "Shareholdings",
+          "hint": "What are the shareholdings of each party as set out or contemplated in this agreement? For each shareholder, state the number of shares held, the class, and the percentage of total share capital (on a fully diluted basis if stated).",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "board_composition",
+          "question": "Board Composition",
+          "hint": "How is the board of directors constituted under this agreement? State the total number of directors, each shareholder's or class of shareholders' right to appoint or nominate directors (and the threshold shareholding required to maintain that right), and any provisions for a chairman or casting vote.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "reserved_matters",
+          "question": "Reserved Matters",
+          "hint": "What are the reserved matters or veto rights set out in this agreement? List each matter that requires shareholder or director approval beyond an ordinary majority (e.g. special majority, unanimity, or the consent of a specific shareholder). Identify the applicable threshold or whose consent is required for each.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "pre_emption_on_new_shares",
+          "question": "Pre-emption on New Shares",
+          "hint": "What pre-emption rights apply on the issuance of new shares? Describe who holds pre-emption rights, the procedure for offering new shares to existing shareholders, the timeline for acceptance, and any carve-outs or exceptions (e.g. shares issued under an employee option scheme, permitted issuances).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "transfer_restrictions",
+          "question": "Transfer Restrictions",
+          "hint": "What restrictions apply to the transfer of shares? Identify any lock-up periods (and their duration), which transfers are prohibited outright, and which transfers are permitted without consent (e.g. transfers to affiliates or family trusts). Note any board or shareholder approval requirements for transfers.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "right_of_first_refusal_pre",
+          "question": "Right of First Refusal / Pre-emption on Transfer",
+          "hint": "Is there a right of first refusal or pre-emption right on a proposed transfer of shares? If so, describe who holds the right, the procedure for triggering and exercising it (including notice periods and pricing mechanics), and any exceptions.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "drag_along_rights",
+          "question": "Drag-Along Rights",
+          "hint": "Are there drag-along rights? If so, identify who holds the drag right (e.g. majority shareholders above a specified threshold), the threshold required to trigger a drag, the obligations imposed on dragged shareholders, any conditions on the drag (e.g. minimum price, independent valuation), and any protections for minority shareholders.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "tag_along_rights",
+          "question": "Tag-Along Rights",
+          "hint": "Are there tag-along rights? If so, identify who holds the tag right, the threshold transfer that triggers the tag, the procedure for exercising the tag (including notice periods), the price and terms on which the tagging shareholder may sell, and any exceptions.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "anti_dilution_protections",
+          "question": "Anti-Dilution Protections",
+          "hint": "Are there any anti-dilution protections for any class of shareholders? If so, describe the type of protection (e.g. full ratchet, weighted average, broad-based or narrow-based), the trigger events, how the adjusted price or entitlement is calculated, and any exceptions (e.g. permitted issuances excluded from the calculation).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "dividend_policy",
+          "question": "Dividend Policy",
+          "hint": "What dividend provisions are set out in this agreement? Describe any obligation or policy to pay dividends (e.g. a minimum percentage of distributable profits), any preferential dividend rights attaching to a particular class of shares, and any restrictions on dividend payments (e.g. subject to available profits, board or shareholder approval, lender consent).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "exit_liquidity_provisions",
+          "question": "Exit & Liquidity Provisions",
+          "hint": "What exit or liquidity provisions are included? Describe any agreed exit mechanisms (e.g. trade sale, IPO, drag-along sale), any timelines or milestones by which an exit is targeted, any shareholder rights to initiate or compel an exit process after a specified period, and any preference on exit proceeds attaching to a particular class of shares.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "deadlock",
+          "question": "Deadlock",
+          "hint": "How is deadlock addressed? Describe any deadlock resolution mechanisms (e.g. escalation to senior management, mediation, Russian roulette / shoot-out provisions, put/call options). For each mechanism, state the trigger conditions, the procedure, and the consequences if deadlock is not resolved.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "non_compete_non_solicitation",
+          "question": "Non-Compete & Non-Solicitation",
+          "hint": "Are any shareholders subject to non-compete or non-solicitation obligations? If so, identify which shareholders are bound, the scope of the restriction (activities and geography), and the duration (during the term of the agreement and/or for a period after a shareholder ceases to hold shares). Note any carve-outs.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "confidentiality",
+          "question": "Confidentiality",
+          "hint": "What confidentiality obligations are imposed on the shareholders? State the scope of confidential information covered, the permitted disclosures (e.g. to professional advisers, affiliates, lenders), and the duration of the obligation. Note whether the obligation survives termination of the agreement.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "warranties",
+          "question": "Warranties",
+          "hint": "What warranties are given by the shareholders under this agreement? Identify who gives warranties, the subject matter (e.g. title to shares, capacity, no encumbrances, no conflicts), any limitations on warranty claims (e.g. time limits, caps, knowledge qualifications), and any indemnities given alongside the warranties.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "governing_law",
+          "question": "Governing Law",
+          "hint": "What governing law applies to this agreement? State the jurisdiction and any specific legal system referenced.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "dispute_resolution",
+          "question": "Dispute Resolution",
+          "hint": "How are disputes resolved under this agreement? Identify whether disputes go to litigation or arbitration, the chosen forum or seat, any mandatory escalation steps, and whether jurisdiction is exclusive.",
+          "type": "text",
+          "options": ""
+        }
+      ],
+      "provenance": {
+        "source_url": "https://github.com/Open-Legal-Products/mike-workflows/tree/f5f9acedc9d851351cf6635f02bc3f9a7cc5d010/tabular-review-workflows/shareholder-agreement-tabular-review",
+        "repository": "https://github.com/Open-Legal-Products/mike-workflows",
+        "revision": "f5f9acedc9d851351cf6635f02bc3f9a7cc5d010",
+        "upstream_path": "tabular-review-workflows/shareholder-agreement-tabular-review",
+        "author": "Open Legal Products",
+        "license": "MIT",
+        "modifications": "Column definitions converted from table-columns.yaml to this app's column schema (format→type, name→question, prompt→hint, derived stable keys). The upstream SKILL.md instruction body is not carried: it directs the model to self-police citations and export .xlsx, whereas this app verifies every citation server-side and renders results in its own grid."
+      }
+    },
+    {
+      "id": "limited-partnership-agreement-tabular-review",
+      "name": "Limited Partnership Agreement Tabular Review",
+      "description": "Use this workflow to review uploaded documents and extract structured information into this review's columns.",
+      "practice": "Private Equity",
+      "jurisdictions": "General",
+      "columns": [
+        {
+          "key": "general_partner",
+          "question": "General Partner",
+          "hint": "Identify the General Partner(s) of the fund. State the full legal name, jurisdiction of establishment, and any affiliated management entity (e.g. the fund manager or investment adviser) named in the agreement.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "fund_name_jurisdiction",
+          "question": "Fund Name & Jurisdiction",
+          "hint": "What is the full name of the fund and in which jurisdiction is the limited partnership established or registered?",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "total_committed_capital",
+          "question": "Total Committed Capital",
+          "hint": "What is the total committed capital of the fund? State the target size, any hard cap, the currency, and the closing date or dates if specified.",
+          "type": "money",
+          "options": ""
+        },
+        {
+          "key": "capital_calls_drawdowns",
+          "question": "Capital Calls & Drawdowns",
+          "hint": "How and when may the GP call capital from LPs? State the notice period for capital calls, the mechanics for issuing a call notice, any limit on the frequency or size of calls, and whether undrawn commitments can be recalled after repayment.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "penalties_for_failure_to_fund",
+          "question": "Penalties for Failure to Fund",
+          "hint": "What are the consequences if an LP fails to fund a capital call? Describe any penalties (e.g. interest on the shortfall, dilution of interest, forced transfer at a discount, loss of voting or distribution rights, exclusion from future investments). Are there any cure periods before penalties apply?",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "investment_scope_restrictions",
+          "question": "Investment Scope & Restrictions",
+          "hint": "What is the fund's stated investment strategy, scope, and any restrictions? Include permitted sectors, geographies, investment stages, instrument types, and any concentration limits (e.g. maximum % of committed capital per single investment). Note how much discretion the GP has to deviate from the stated strategy.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "fund_term",
+          "question": "Fund Term",
+          "hint": "What is the term of the fund? State the initial term (e.g. 10 years from final closing), any permitted extension periods (e.g. 2 × 1-year extensions), who has the right to approve extensions (GP alone or with LP/LPAC consent), and any early termination mechanics.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "management_fee",
+          "question": "Management Fee",
+          "hint": "What management fee is payable to the GP or manager? State the fee rate, the basis on which it is calculated (e.g. committed capital during the investment period, then invested or net asset value thereafter), any step-downs over the fund life, and the payment frequency.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "carried_interest",
+          "question": "Carried Interest",
+          "hint": "What carried interest (carry) is payable to the GP? State the carry percentage, the structure (European/fund-level waterfall vs American/deal-by-deal), and identify each step of the distribution waterfall in sequence (e.g. return of capital, preferred return, GP catch-up, then profit split).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "preferred_return_hurdle_rate",
+          "question": "Preferred Return (Hurdle Rate)",
+          "hint": "Is there a preferred return or hurdle rate that LPs must receive before the GP earns carry? State the rate, whether it is compounded (and on what basis), and how it is calculated (e.g. on invested capital, on contributed capital). If there is no preferred return, state this explicitly.",
+          "type": "percentage",
+          "options": ""
+        },
+        {
+          "key": "gp_catch_up",
+          "question": "GP Catch-Up",
+          "hint": "Is there a GP catch-up mechanism after the preferred return is met? If so, describe how it operates: what percentage of distributions go to the GP during the catch-up, and what economic result the catch-up is designed to achieve (e.g. the GP receives 20% of all profits to date).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "clawback",
+          "question": "Clawback",
+          "hint": "Is there a clawback obligation on the GP if it receives excess carry? State whether the clawback is calculated at fund level or individual partner level, when it is triggered, any cap or limit on the clawback obligation, and whether there is any escrow or security arrangement to support the GP's clawback obligation.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "fees_expenses_beyond_management_fee",
+          "question": "Fees & Expenses (Beyond Management Fee)",
+          "hint": "What fees and expenses are charged to the fund or LPs beyond the management fee? List each category (e.g. transaction fees, monitoring fees, broken deal costs, formation expenses, legal fees, fund administration costs, organisational expenses). For each, state who bears the cost and whether any amounts are offset against the management fee.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "distributions",
+          "question": "Distributions",
+          "hint": "How and when are distributions made to LPs? Describe the timing of distributions (e.g. upon realisation of investments or at the GP's discretion), whether the GP can reinvest proceeds within the investment period, and whether distributions may be made in-kind (i.e. as securities rather than cash).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "key_person_clause",
+          "question": "Key Person Clause",
+          "hint": "Is there a key person clause? Identify the designated key persons. What triggers the key person event (e.g. departure, incapacity, reduced time commitment below a threshold)? What are the consequences (e.g. suspension of the investment period)? Do LPs have any right to terminate or vote on continuation following a key person event?",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "removal_of_the_gp",
+          "question": "Removal of the GP",
+          "hint": "Under what circumstances can the GP be removed? Distinguish between removal for cause (e.g. fraud, gross negligence, wilful misconduct — state the LP voting threshold required) and removal without cause (state the LP voting threshold and any associated consequences such as carried interest treatment on removal).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "advisory_committee_lpac",
+          "question": "Advisory Committee (LPAC)",
+          "hint": "Is there an LP Advisory Committee (LPAC) or similar governance body? If so, describe its composition, how members are selected, its key powers and responsibilities (e.g. approving conflicts of interest, valuations, extensions, related-party transactions), and whether its approval is binding or merely advisory.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "transfer_restrictions",
+          "question": "Transfer Restrictions",
+          "hint": "What restrictions apply to an LP transferring or assigning its interest in the fund? Is GP consent required? Are there any permitted transfer exceptions (e.g. to affiliates)? Are secondary market sales permitted and, if so, subject to what conditions or rights of first refusal?",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "conflicts_of_interest",
+          "question": "Conflicts of Interest",
+          "hint": "How does the agreement address conflicts of interest? Describe the deal allocation policy across funds, any co-investment rights granted to LPs, restrictions on related-party transactions, and the role of the LPAC in reviewing or approving conflicts. Note any specific conflict scenarios expressly contemplated.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "governing_law",
+          "question": "Governing Law",
+          "hint": "What governing law applies to this agreement and which courts or arbitral tribunals have jurisdiction over disputes?",
+          "type": "text",
+          "options": ""
+        }
+      ],
+      "provenance": {
+        "source_url": "https://github.com/Open-Legal-Products/mike-workflows/tree/f5f9acedc9d851351cf6635f02bc3f9a7cc5d010/tabular-review-workflows/limited-partnership-agreement-tabular-review",
+        "repository": "https://github.com/Open-Legal-Products/mike-workflows",
+        "revision": "f5f9acedc9d851351cf6635f02bc3f9a7cc5d010",
+        "upstream_path": "tabular-review-workflows/limited-partnership-agreement-tabular-review",
+        "author": "Open Legal Products",
+        "license": "MIT",
+        "modifications": "Column definitions converted from table-columns.yaml to this app's column schema (format→type, name→question, prompt→hint, derived stable keys). The upstream SKILL.md instruction body is not carried: it directs the model to self-police citations and export .xlsx, whereas this app verifies every citation server-side and renders results in its own grid."
+      }
+    },
+    {
+      "id": "employment-agreement-tabular-review",
+      "name": "Employment Agreement Tabular Review",
+      "description": "Use this workflow to review uploaded documents and extract structured information into this review's columns.",
+      "practice": "Employment",
+      "jurisdictions": "General",
+      "columns": [
+        {
+          "key": "employer",
+          "question": "Employer",
+          "hint": "Who is the employer under this agreement? State the full legal name and jurisdiction of incorporation or establishment.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "employee",
+          "question": "Employee",
+          "hint": "Who is the employee under this agreement? State their full name and, if provided, their address or location.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "date",
+          "question": "Date",
+          "hint": "What is the date of this employment agreement? If a commencement date or start date differs from the signing date, state both.",
+          "type": "date",
+          "options": ""
+        },
+        {
+          "key": "title",
+          "question": "Title",
+          "hint": "What is the employee's job title or position as stated in this agreement? If a reporting line is specified, include it.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "compensation",
+          "question": "Compensation",
+          "hint": "What is the employee's compensation under this agreement? State the base salary or wage, the currency, and the payment frequency (e.g. monthly, bi-weekly). Include any guaranteed bonus, commission, or other fixed remuneration elements.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "full_time_part_time",
+          "question": "Full Time / Part Time",
+          "hint": "Is this a full-time or part-time position? If part-time, state the number of days or hours per week where specified.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "independent_contractor",
+          "question": "Independent Contractor?",
+          "hint": "Does the agreement characterise the worker as an independent contractor rather than an employee? Answer Yes if the agreement uses contractor, consultant, or self-employed language. Note any provisions that address the nature of the relationship.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "benefits",
+          "question": "Benefits",
+          "hint": "What benefits are the employee entitled to under this agreement? List each benefit (e.g. health insurance, pension/retirement contributions, life assurance, car allowance, share options, expense reimbursement). Note any eligibility conditions or limits.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "notice_period_employer_to_employee",
+          "question": "Notice Period (Employer to Employee)",
+          "hint": "What notice must the employer give to terminate the employee's employment (other than for cause)? State the notice period and any provisions for payment in lieu of notice.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "notice_period_employee_to_employer",
+          "question": "Notice Period (Employee to Employer)",
+          "hint": "What notice must the employee give to resign? State the notice period and any provisions for payment in lieu of notice or garden leave.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "overtime",
+          "question": "Overtime",
+          "hint": "What provisions apply to overtime? Is the employee eligible for overtime pay, and if so at what rate? Or does the agreement state that the salary is inclusive of any overtime? Note any opt-out of statutory working time limits.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "working_hours",
+          "question": "Working Hours",
+          "hint": "What working hours are specified in this agreement? State the normal hours of work, any flexibility provisions, and whether the employee is expected to work additional hours as required.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "variation",
+          "question": "Variation",
+          "hint": "What provisions govern variation of the terms of this agreement? Can the employer unilaterally vary terms, or is the employee's consent required? Note any specific terms that are stated to be variable without consent.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "intellectual_property_assignment",
+          "question": "Intellectual Property Assignment",
+          "hint": "What intellectual property assignment provisions are included? Does the employee assign to the employer all IP created in the course of employment? Are there any carve-outs for pre-existing IP or inventions created outside working hours? Note any moral rights waiver.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "grounds_for_termination",
+          "question": "Grounds for Termination",
+          "hint": "What grounds for summary dismissal or termination for cause are set out in the agreement? List each ground (e.g. gross misconduct, breach of confidentiality, insolvency, criminal conviction). Note whether summary dismissal is without notice or payment in lieu.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "annual_leave_entitlement",
+          "question": "Annual Leave Entitlement",
+          "hint": "What is the employee's annual leave entitlement? State the number of days (or weeks) per year, whether this is inclusive of or in addition to public holidays, and any provisions for accrual, carry-over, or payment of untaken leave on termination.",
+          "type": "text",
+          "options": ""
+        }
+      ],
+      "provenance": {
+        "source_url": "https://github.com/Open-Legal-Products/mike-workflows/tree/f5f9acedc9d851351cf6635f02bc3f9a7cc5d010/tabular-review-workflows/employment-agreement-tabular-review",
+        "repository": "https://github.com/Open-Legal-Products/mike-workflows",
+        "revision": "f5f9acedc9d851351cf6635f02bc3f9a7cc5d010",
+        "upstream_path": "tabular-review-workflows/employment-agreement-tabular-review",
+        "author": "Open Legal Products",
+        "license": "MIT",
+        "modifications": "Column definitions converted from table-columns.yaml to this app's column schema (format→type, name→question, prompt→hint, derived stable keys). The upstream SKILL.md instruction body is not carried: it directs the model to self-police citations and export .xlsx, whereas this app verifies every citation server-side and renders results in its own grid."
+      }
+    },
+    {
+      "id": "supply-agreement-tabular-review",
+      "name": "Supply Agreement Tabular Review",
+      "description": "Use this workflow to review uploaded documents and extract structured information into this review's columns.",
+      "practice": "General Transactions",
+      "jurisdictions": "General",
+      "columns": [
+        {
+          "key": "parties",
+          "question": "Parties",
+          "hint": "Identify all parties to this supply agreement. For each, state their full legal name, jurisdiction of incorporation (if stated), and their role (e.g. supplier, buyer, distributor).",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "effective_date",
+          "question": "Effective Date",
+          "hint": "What is the effective date or commencement date of this agreement? If no explicit date is stated, note the date it is deemed to take effect.",
+          "type": "date",
+          "options": ""
+        },
+        {
+          "key": "products",
+          "question": "Products",
+          "hint": "What products are to be supplied under this agreement? List each product or product category, including any relevant specifications, part numbers, or standards referenced.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "term",
+          "question": "Term",
+          "hint": "What is the initial term or duration of this agreement? State the start date (or reference to when it commences) and the end date or duration.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "renewal",
+          "question": "Renewal",
+          "hint": "What renewal provisions apply? Is renewal automatic or by agreement? State the renewal period, notice requirements to prevent renewal, and any conditions on renewal.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "delivery",
+          "question": "Delivery",
+          "hint": "What delivery obligations and terms apply? Identify the delivery terms (e.g. Incoterms), delivery lead times, delivery locations, risk of loss, and any consequences for late or failed delivery.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "quality",
+          "question": "Quality",
+          "hint": "What quality standards or specifications apply to the products? Identify any applicable standards (e.g. ISO, regulatory requirements), inspection rights, acceptance procedures, and consequences of non-conformance.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "warranties",
+          "question": "Warranties",
+          "hint": "What warranties does the supplier give in relation to the products? State the warranty period, the scope of the warranty (e.g. free from defects, conformance to specifications), the remedy for breach (e.g. repair, replacement, refund), and any exclusions.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "liquidated_damages",
+          "question": "Liquidated Damages",
+          "hint": "Are there any liquidated damages provisions? If so, identify what triggers them (e.g. late delivery, failure to meet quality standards), the applicable rate or formula, any aggregate cap, and whether they are stated to be the exclusive remedy.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "limitation_of_liability",
+          "question": "Limitation of Liability",
+          "hint": "What limitations of liability apply? Identify any caps on liability (and how they are calculated, e.g. contract value, fees paid), exclusions of consequential or indirect loss, and any carve-outs from the limitation (e.g. fraud, wilful misconduct, death or personal injury).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "force_majeure",
+          "question": "Force Majeure",
+          "hint": "Summarise the force majeure clause. What events qualify, what obligations are suspended, what notice must be given, how long must the event persist before either party may terminate, and what are the consequences of termination for force majeure?",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "termination_rights",
+          "question": "Termination Rights",
+          "hint": "What are the termination rights of each party? Distinguish between termination for convenience (including notice period) and termination for cause (including cure periods and triggers). Note what happens on termination, including any outstanding purchase orders or payment obligations.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "governing_law",
+          "question": "Governing Law",
+          "hint": "What governing law applies to this agreement? State the jurisdiction and any specific legal system referenced.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "dispute_resolution",
+          "question": "Dispute Resolution",
+          "hint": "How are disputes resolved under this agreement? Identify whether disputes go to litigation or arbitration, the chosen forum or seat, and any mandatory escalation steps (e.g. negotiation, mediation) before formal proceedings.",
+          "type": "text",
+          "options": ""
+        }
+      ],
+      "provenance": {
+        "source_url": "https://github.com/Open-Legal-Products/mike-workflows/tree/f5f9acedc9d851351cf6635f02bc3f9a7cc5d010/tabular-review-workflows/supply-agreement-tabular-review",
+        "repository": "https://github.com/Open-Legal-Products/mike-workflows",
+        "revision": "f5f9acedc9d851351cf6635f02bc3f9a7cc5d010",
+        "upstream_path": "tabular-review-workflows/supply-agreement-tabular-review",
+        "author": "Open Legal Products",
+        "license": "MIT",
+        "modifications": "Column definitions converted from table-columns.yaml to this app's column schema (format→type, name→question, prompt→hint, derived stable keys). The upstream SKILL.md instruction body is not carried: it directs the model to self-police citations and export .xlsx, whereas this app verifies every citation server-side and renders results in its own grid."
+      }
+    },
+    {
+      "id": "commercial-agreement-tabular-review",
+      "name": "Commercial Agreement Tabular Review",
+      "description": "Use this workflow to review uploaded documents and extract structured information into this review's columns.",
+      "practice": "General Transactions",
+      "jurisdictions": "General",
+      "columns": [
+        {
+          "key": "parties",
+          "question": "Parties",
+          "hint": "Identify all parties to this agreement. For each party state their full legal name, jurisdiction of incorporation (if stated), and their role in the agreement (e.g. supplier, customer, licensor).",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "scope_of_work",
+          "question": "Scope of Work",
+          "hint": "Summarise the scope of work or services to be provided under this agreement. What are the key deliverables, obligations, or services? Identify any limitations or exclusions to the scope.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "amends_earlier_agreement",
+          "question": "Amends Earlier Agreement",
+          "hint": "Does this agreement amend, restate, supplement, or replace an earlier agreement? If yes, identify the earlier agreement by name and date.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "effective_date",
+          "question": "Effective Date",
+          "hint": "What is the effective date or commencement date of this agreement? If no explicit date is stated, note when it is deemed to take effect.",
+          "type": "date",
+          "options": ""
+        },
+        {
+          "key": "term",
+          "question": "Term",
+          "hint": "What is the duration or term of this agreement? State the initial term length and any conditions that affect the duration.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "renewal",
+          "question": "Renewal",
+          "hint": "What renewal provisions apply? Specify whether renewal is automatic or requires notice, the renewal period, and any conditions or notice periods required to prevent automatic renewal.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "pricing",
+          "question": "Pricing",
+          "hint": "What is the pricing structure under this agreement? Identify all fees, rates, charges, and payment terms including currency, payment schedule, and invoicing requirements.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "price_adjustments",
+          "question": "Price Adjustments",
+          "hint": "Are there any price adjustment mechanisms in this agreement? Identify any indexation, CPI/RPI linkage, benchmarking, volume-based adjustments, or other mechanisms that allow prices to change over the term.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "penalties_for_late_payment",
+          "question": "Penalties for Late Payment",
+          "hint": "What penalties or consequences apply for late payment? Include any interest rates on overdue amounts, suspension rights, or other remedies available to the payee.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "estimated_contract_value",
+          "question": "Estimated Contract Value",
+          "hint": "What is the total estimated or stated contract value? If no single figure is given, calculate or estimate based on stated rates and term. State the currency and any assumptions made.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "limitation_of_liability",
+          "question": "Limitation of Liability",
+          "hint": "What limitations of liability apply? Identify any caps on liability (including how they are calculated), exclusions of consequential or indirect loss, and any carve-outs from the cap (e.g. fraud, death, IP infringement).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "ip_ownership_and_licensing",
+          "question": "IP Ownership and Licensing",
+          "hint": "How is intellectual property ownership and licensing addressed? Identify who owns pre-existing IP, who owns newly created IP, and what licences are granted to each party. Note any restrictions on use.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "change_of_control",
+          "question": "Change of Control",
+          "hint": "Is there a change of control provision? If so, describe what constitutes a change of control, whether consent is required, and what rights (e.g. termination, assignment) are triggered.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "force_majeure",
+          "question": "Force Majeure",
+          "hint": "Summarise the force majeure clause. What events qualify, what obligations are suspended, how long must the event persist before termination is permitted, and what notice is required?",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "termination_rights",
+          "question": "Termination Rights",
+          "hint": "What are the termination rights of each party? Identify termination for convenience (including notice period), termination for cause (including cure periods), and the consequences of termination (e.g. payment obligations, survival of terms).",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "liquidated_damages",
+          "question": "Liquidated Damages",
+          "hint": "Are there any liquidated damages provisions? If so, identify what triggers them, the applicable rate or formula, any cap on aggregate liquidated damages, and whether they are the exclusive remedy.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "governing_law",
+          "question": "Governing Law",
+          "hint": "What governing law applies to this agreement? State the jurisdiction and any specific legal system referenced.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "dispute_resolution",
+          "question": "Dispute Resolution",
+          "hint": "How are disputes resolved under this agreement? Identify whether disputes go to litigation or arbitration, the chosen forum or seat, any escalation or mediation steps required before formal proceedings, and the language of proceedings.",
+          "type": "text",
+          "options": ""
+        }
+      ],
+      "provenance": {
+        "source_url": "https://github.com/Open-Legal-Products/mike-workflows/tree/f5f9acedc9d851351cf6635f02bc3f9a7cc5d010/tabular-review-workflows/commercial-agreement-tabular-review",
+        "repository": "https://github.com/Open-Legal-Products/mike-workflows",
+        "revision": "f5f9acedc9d851351cf6635f02bc3f9a7cc5d010",
+        "upstream_path": "tabular-review-workflows/commercial-agreement-tabular-review",
+        "author": "Open Legal Products",
+        "license": "MIT",
+        "modifications": "Column definitions converted from table-columns.yaml to this app's column schema (format→type, name→question, prompt→hint, derived stable keys). The upstream SKILL.md instruction body is not carried: it directs the model to self-police citations and export .xlsx, whereas this app verifies every citation server-side and renders results in its own grid."
+      }
+    },
+    {
+      "id": "change-of-control-tabular-review",
+      "name": "Change of Control Tabular Review",
+      "description": "This workflow performs a change of control due diligence review across the selected documents.",
+      "practice": "Corporate",
+      "jurisdictions": "General",
+      "columns": [
+        {
+          "key": "parties",
+          "question": "Parties",
+          "hint": "Identify all parties to this agreement. For each party state their full legal name and their role (e.g. counterparty, licensor, lender, supplier).",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "date",
+          "question": "Date",
+          "hint": "What is the date of this agreement? If a commencement date differs from the signing date, state both.",
+          "type": "date",
+          "options": ""
+        },
+        {
+          "key": "term",
+          "question": "Term",
+          "hint": "What is the term or duration of this agreement? State the start and end dates or the length of the term.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "change_of_control_clause",
+          "question": "Change of Control Clause",
+          "hint": "Identify and summarize the change of control clause(s) in this document. Quote the exact triggering language and specify what constitutes a 'change of control'.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "consent_required",
+          "question": "Consent Required",
+          "hint": "Does a change of control require prior consent from any party? Identify who must consent, the notice period, and any conditions.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "termination_rights",
+          "question": "Termination Rights",
+          "hint": "What termination rights arise upon a change of control? Who can terminate, and what are the notice requirements?",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "put_call_options",
+          "question": "Put/Call Options",
+          "hint": "Are there any put or call options triggered by a change of control? Summarize the terms, pricing, and exercise period.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "financial_implications",
+          "question": "Financial Implications",
+          "hint": "What are the financial implications of a change of control? Include any fees, payments, accelerated obligations, or pricing adjustments.",
+          "type": "text",
+          "options": ""
+        }
+      ],
+      "provenance": {
+        "source_url": "https://github.com/Open-Legal-Products/mike-workflows/tree/f5f9acedc9d851351cf6635f02bc3f9a7cc5d010/tabular-review-workflows/change-of-control-tabular-review",
+        "repository": "https://github.com/Open-Legal-Products/mike-workflows",
+        "revision": "f5f9acedc9d851351cf6635f02bc3f9a7cc5d010",
+        "upstream_path": "tabular-review-workflows/change-of-control-tabular-review",
+        "author": "Open Legal Products",
+        "license": "MIT",
+        "modifications": "Column definitions converted from table-columns.yaml to this app's column schema (format→type, name→question, prompt→hint, derived stable keys). The upstream SKILL.md instruction body is not carried: it directs the model to self-police citations and export .xlsx, whereas this app verifies every citation server-side and renders results in its own grid."
+      }
+    },
+    {
+      "id": "e-discovery-tabular-review",
+      "name": "E-Discovery Tabular Review",
+      "description": "Use this workflow to review uploaded documents and extract structured information into this review's columns.",
+      "practice": "Litigation",
+      "jurisdictions": "General",
+      "columns": [
+        {
+          "key": "date",
+          "question": "Date",
+          "hint": "What is the date of this document? For emails or correspondence, use the date sent. For other documents, use the date of creation, signature, or the most prominent date shown.",
+          "type": "date",
+          "options": ""
+        },
+        {
+          "key": "type_of_document",
+          "question": "Type of Document",
+          "hint": "What type of document is this? (e.g. email, memorandum, letter, contract, report, meeting minutes, text message, invoice, presentation). Be specific.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "sender",
+          "question": "Sender",
+          "hint": "Who is the sender or author of this document? State their full name, title, and organisation where identifiable.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "recipient_s",
+          "question": "Recipient(s)",
+          "hint": "Who are the recipients of this document? List all To, CC, and BCC recipients where identifiable. State their full name, title, and organisation for each. Note whether they appear in To, CC, or BCC fields.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "summary",
+          "question": "Summary",
+          "hint": "Provide a concise factual summary of the content of this document in 2–4 sentences. Focus on the key subject matter, any decisions made, actions requested, or information conveyed. Do not include legal conclusions.",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "persons_mentioned",
+          "question": "Persons Mentioned",
+          "hint": "List all individuals mentioned in this document (other than the sender and recipients already identified). For each person, state their name and, if discernible, their role or organisation.",
+          "type": "bulleted_list",
+          "options": ""
+        },
+        {
+          "key": "privileged",
+          "question": "Privileged?",
+          "hint": "Does this document appear to be legally privileged? Answer Yes if it appears to be a communication between a lawyer and client made for the dominant purpose of obtaining or giving legal advice, or created for the dominant purpose of litigation. Answer No otherwise. If uncertain, note the basis for uncertainty.",
+          "type": "text",
+          "options": ""
+        }
+      ],
+      "provenance": {
+        "source_url": "https://github.com/Open-Legal-Products/mike-workflows/tree/f5f9acedc9d851351cf6635f02bc3f9a7cc5d010/tabular-review-workflows/e-discovery-tabular-review",
+        "repository": "https://github.com/Open-Legal-Products/mike-workflows",
+        "revision": "f5f9acedc9d851351cf6635f02bc3f9a7cc5d010",
+        "upstream_path": "tabular-review-workflows/e-discovery-tabular-review",
+        "author": "Open Legal Products",
+        "license": "MIT",
+        "modifications": "Column definitions converted from table-columns.yaml to this app's column schema (format→type, name→question, prompt→hint, derived stable keys). The upstream SKILL.md instruction body is not carried: it directs the model to self-police citations and export .xlsx, whereas this app verifies every citation server-side and renders results in its own grid."
+      }
+    }
+  ]
+}

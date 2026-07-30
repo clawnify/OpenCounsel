@@ -155,6 +155,7 @@ export default function ReviewGrid() {
                           <td key={col.id} className="border-l border-border px-3 py-2 align-top">
                             <CellView
                               cell={cell}
+                              type={col.type}
                               onOpen={() => cell && setOpen({ cell, document: doc, question: col.question })}
                             />
                           </td>
@@ -202,7 +203,38 @@ export default function ReviewGrid() {
  * answer, an honest "the document doesn't say", and a claim whose evidence
  * failed the check. The third must never look like the first.
  */
-function CellView({ cell, onOpen }: { cell?: Cell; onOpen: () => void }) {
+/**
+ * Ten muted pairs from the design system. A categorical *data* value always
+ * hashes to the same colour, so "Mutual" reads the same in every row and the
+ * eye can scan a column without reading it. This is the one place chroma is
+ * welcome — it is data, not chrome.
+ */
+const PILL_COLORS = [
+  ["#FEF2F2", "#DC2626"], ["#ECFDF5", "#059669"], ["#EFF6FF", "#2563EB"],
+  ["#FFFBEB", "#D97706"], ["#F5F3FF", "#7C3AED"], ["#F0FDFA", "#0D9488"],
+  ["#FDF2F8", "#DB2777"], ["#FFF7ED", "#EA580C"], ["#FAF5FF", "#9333EA"],
+  ["#F0FDF4", "#16A34A"],
+] as const;
+
+function pillColor(value: string) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) hash = ((hash << 5) - hash + value.charCodeAt(i)) | 0;
+  return PILL_COLORS[Math.abs(hash) % PILL_COLORS.length];
+}
+
+/**
+ * Short, enumerable answers ("Mutual", "New York") read as categories and get a
+ * pill; a sentence does not. The imported column sets declare most of these as
+ * plain text rather than an enum, so this is decided by the shape of the answer
+ * rather than by the column's type.
+ */
+function isCategorical(value: string, type?: string): boolean {
+  if (type === "enum" || type === "boolean") return true;
+  if (type && type !== "text") return false;
+  return value.length <= 24 && !/[.;:]/.test(value) && value.split(/\s+/).length <= 3;
+}
+
+function CellView({ cell, type, onOpen }: { cell?: Cell; type?: string; onOpen: () => void }) {
   if (!cell) return <span className="text-xs text-faint">—</span>;
 
   if (cell.status === "not_found") {
@@ -223,13 +255,49 @@ function CellView({ cell, onOpen }: { cell?: Cell; onOpen: () => void }) {
 
   return (
     <button onClick={onOpen} className="w-full text-left" aria-label="Show the citation for this answer">
-      <span className="block text-[0.8125rem] text-foreground">{cell.value || "—"}</span>
+      <AnswerValue value={cell.value} type={type} />
       <span className="mt-1 inline-flex items-center gap-1 text-[0.6875rem] text-link group-hover:underline">
         <Quote className="size-3" />
         p.{cell.page_no}
       </span>
     </button>
   );
+}
+
+function AnswerValue({ value, type }: { value: string; type?: string }) {
+  if (!value) return <span className="block text-[0.8125rem] text-faint">—</span>;
+
+  if (type === "bulleted_list") {
+    // Imported packs ask for lists on 9 of 11 column sets; agents write them as
+    // newline- or dash-separated text, so render whichever arrives.
+    const items = value
+      .split(/\n+|(?:^|\s)[-•]\s+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (items.length > 1) {
+      return (
+        <ul className="list-disc space-y-0.5 pl-4 text-[0.8125rem] text-foreground">
+          {items.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
+        </ul>
+      );
+    }
+  }
+
+  if (isCategorical(value, type)) {
+    const [bg, fg] = pillColor(value.toLowerCase());
+    return (
+      <span
+        className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-normal"
+        style={{ backgroundColor: bg, color: fg }}
+      >
+        {value}
+      </span>
+    );
+  }
+
+  return <span className="block text-[0.8125rem] text-foreground">{value}</span>;
 }
 
 /** The evidence behind one cell — the reason to trust the grid at all. */

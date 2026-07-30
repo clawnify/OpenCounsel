@@ -75,7 +75,25 @@ export interface Workflow {
   name: string;
   description: string;
   columns: { key: string; question: string; hint?: string; type?: string; options?: string }[];
+  /** Set when the workflow was copied from a bundled pack — drives attribution. */
+  source_pack?: string;
+  source_url?: string;
+  author?: string;
+  license?: string;
   created_at: string;
+}
+
+/** A bundled, practitioner-authored column set available to import. */
+export interface Pack {
+  id: string;
+  name: string;
+  description: string;
+  practice: string;
+  jurisdictions: string;
+  column_count: number;
+  author: string;
+  license: string;
+  source_url: string;
 }
 
 export class ApiError extends Error {}
@@ -127,6 +145,9 @@ export const api = {
   deleteReview: (id: string) => request<{ ok: boolean }>(`/api/reviews/${id}`, { method: "DELETE" }),
 
   workflows: () => request<{ workflows: Workflow[]; total: number }>("/api/workflows?limit=50"),
+  packs: () => request<{ packs: Pack[] }>("/api/workflow-packs"),
+  importPack: (id: string) =>
+    request<{ id: string; name: string; column_count: number }>(`/api/workflow-packs/${id}/import`, { method: "POST" }),
   createWorkflow: (body: Record<string, unknown>) =>
     request<{ id: string }>("/api/workflows", { method: "POST", body: JSON.stringify(body) }),
   deleteWorkflow: (id: string) => request<{ ok: boolean }>(`/api/workflows/${id}`, { method: "DELETE" }),
