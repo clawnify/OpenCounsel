@@ -905,7 +905,20 @@ app.openapi(putCells, async (c) => {
     accepted++;
   }
 
-  await run("UPDATE reviews SET status = 'running', updated_at = datetime('now') WHERE id = ?", [id]);
+  // Advance the review's own status from what actually landed, so the UI can
+  // tell "the agent is still working" from "the agent has finished" without
+  // anyone having to report completion. A cell is covered whatever its verdict
+  // — an unresolved cell is a finished attempt, not an outstanding one.
+  const covered = await countOf("SELECT COUNT(*) AS n FROM review_cells WHERE review_id = ?", [id]);
+  const expected =
+    (await countOf("SELECT COUNT(*) AS n FROM documents WHERE matter_id = ? AND extract_status = 'ready'", [
+      review.matter_id,
+    ])) * (await countOf("SELECT COUNT(*) AS n FROM review_columns WHERE review_id = ?", [id]));
+
+  await run("UPDATE reviews SET status = ?, updated_at = datetime('now') WHERE id = ?", [
+    expected > 0 && covered >= expected ? "complete" : "running",
+    id,
+  ]);
 
   return c.json({ accepted, rejected } as never, rejected.length ? 422 : 200);
 });

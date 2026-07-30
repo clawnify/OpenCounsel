@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bookmark, Download, Play, Quote, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Bookmark, Download, Loader2, Play, Quote, TriangleAlert } from "lucide-react";
 import { api, type Cell, type Document, type Review } from "../api";
 import { Badge, Button, Card, Chip, Empty, Eyebrow, Field, Input, Modal, Toolbar, Zone } from "../components/ui";
 
@@ -13,6 +13,7 @@ export default function ReviewGrid() {
   const [brief, setBrief] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
+  const [stalled, setStalled] = useState(false);
   const [error, setError] = useState("");
 
   async function load() {
@@ -39,11 +40,53 @@ export default function ReviewGrid() {
     void load().catch((e) => setError((e as Error).message));
   }, [id]);
 
+  const filled = review ? review.answered + review.not_found + review.rejected : 0;
+
+  /**
+   * Watch the grid fill while the agent works.
+   *
+   * Dispatch is one-way by design: the agent reports progress by posting cells
+   * back here, so there is no job to ask the platform about — the cells table
+   * *is* the progress. Polling it is what turns "I pressed Run and nothing
+   * happened" into a review the user can watch complete.
+   *
+   * The cheap call (counts only) runs on the interval; the expensive one (the
+   * whole grid) only when those counts actually moved.
+   */
+  useEffect(() => {
+    if (review?.status !== "running") return;
+    const startedAt = Date.now();
+    const timer = setInterval(async () => {
+      // Don't poll an abandoned tab forever; a review that has gone quiet for
+      // half an hour needs a human, not another request.
+      if (Date.now() - startedAt > 30 * 60_000) {
+        clearInterval(timer);
+        // Stop claiming to be watching. A spinner that spins forever over a
+        // dead agent tells the user the same lie as showing nothing at all.
+        setStalled(true);
+        return;
+      }
+      try {
+        const next = await api.review(id);
+        const moved = next.answered + next.not_found + next.rejected !== filled;
+        setReview(next);
+        if (moved) await load();
+      } catch {
+        // Transient — keep watching rather than tearing the page down.
+      }
+    }, 5_000);
+    return () => clearInterval(timer);
+  }, [review?.status, filled, id]);
+
   async function run() {
     setError("");
     try {
       const result = await api.runReview(id);
       if (result.dispatched) {
+        setStalled(false);
+        // The server marks the review running on a successful dispatch, so
+        // reloading is what raises the progress banner — the user gets an
+        // answer to "did that do anything?" in the same click.
         await load();
         setError("");
       } else {
@@ -122,6 +165,28 @@ export default function ReviewGrid() {
         </Link>
 
         {error ? <p className="mb-4 text-sm text-danger">{error}</p> : null}
+
+        {review?.status === "running" && !stalled ? (
+          <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-border bg-sunken p-3">
+            <Loader2 className="size-4 shrink-0 animate-spin text-muted" />
+            <div className="text-[0.8125rem]">
+              <strong className="font-semibold">Your agent is reviewing.</strong>{" "}
+              <span className="data">{filled}</span> of <span className="data">{total}</span> cells so far — this page
+              updates itself as answers arrive.
+            </div>
+          </div>
+        ) : null}
+
+        {review?.status === "running" && stalled ? (
+          <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-warning/25 bg-warning-tint p-3">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
+            <div className="text-[0.8125rem] text-warning">
+              <strong className="font-semibold">No answers for a while.</strong> {filled} of {total} cells were filled
+              before your agent went quiet. Run the review again to pick up where it stopped — answers already stored
+              are kept.
+            </div>
+          </div>
+        ) : null}
 
         {review && review.rejected > 0 ? (
           <div className="mb-4 flex items-start gap-2 rounded-lg border border-danger/25 bg-danger-tint p-3">
