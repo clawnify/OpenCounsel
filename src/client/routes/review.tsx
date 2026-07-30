@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Bookmark, Download, Loader2, Play, Quote, TriangleAlert } from "lucide-react";
 import { api, type Cell, type Document, type Review } from "../api";
-import { Badge, Button, Card, Chip, Empty, Eyebrow, Field, Input, Modal, Toolbar, Zone } from "../components/ui";
+import { Badge, Button, Chip, Empty, Eyebrow, Field, Input, Modal, Toolbar } from "../components/ui";
 
 export default function ReviewGrid() {
   const { id = "" } = useParams();
@@ -40,7 +40,18 @@ export default function ReviewGrid() {
     void load().catch((e) => setError((e as Error).message));
   }, [id]);
 
+  const byKey = new Map(cells.map((c) => [`${c.document_id}:${c.column_id}`, c]));
+  const columns = review?.columns ?? [];
+  const total = documents.length * columns.length;
   const filled = review ? review.answered + review.not_found + review.rejected : 0;
+
+  /**
+   * Whether the agent is still working, judged from the grid rather than from
+   * the stored flag alone. A review whose every cell has a verdict is finished
+   * no matter what its status column says — rows predating the status logic,
+   * or a run that ended without a final post, would otherwise spin forever.
+   */
+  const isRunning = review?.status === "running" && (total === 0 || filled < total);
 
   /**
    * Watch the grid fill while the agent works.
@@ -54,7 +65,7 @@ export default function ReviewGrid() {
    * whole grid) only when those counts actually moved.
    */
   useEffect(() => {
-    if (review?.status !== "running") return;
+    if (!isRunning) return;
     const startedAt = Date.now();
     const timer = setInterval(async () => {
       // Don't poll an abandoned tab forever; a review that has gone quiet for
@@ -76,7 +87,7 @@ export default function ReviewGrid() {
       }
     }, 5_000);
     return () => clearInterval(timer);
-  }, [review?.status, filled, id]);
+  }, [isRunning, filled, id]);
 
   async function run() {
     setError("");
@@ -122,9 +133,6 @@ export default function ReviewGrid() {
     setSaved(name);
   }
 
-  const byKey = new Map(cells.map((c) => [`${c.document_id}:${c.column_id}`, c]));
-  const columns = review?.columns ?? [];
-  const total = documents.length * columns.length;
 
   return (
     <>
@@ -166,7 +174,7 @@ export default function ReviewGrid() {
 
         {error ? <p className="mb-4 text-sm text-danger">{error}</p> : null}
 
-        {review?.status === "running" && !stalled ? (
+        {isRunning && !stalled ? (
           <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-border bg-sunken p-3">
             <Loader2 className="size-4 shrink-0 animate-spin text-muted" />
             <div className="text-[0.8125rem]">
@@ -177,7 +185,7 @@ export default function ReviewGrid() {
           </div>
         ) : null}
 
-        {review?.status === "running" && stalled ? (
+        {isRunning && stalled ? (
           <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-warning/25 bg-warning-tint p-3">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
             <div className="text-[0.8125rem] text-warning">
@@ -205,14 +213,19 @@ export default function ReviewGrid() {
             hint="A review needs at least one readable document and one column."
           />
         ) : (
-          <Card className="overflow-hidden">
-            <Zone>
-              <Eyebrow right={`${documents.length} × ${columns.length}`}>Review grid</Eyebrow>
-            </Zone>
+          // Full-bleed: the grid IS this page. Wrapping it in a card would add
+          // a redundant frame and steal width from the one thing being read.
+          <>
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <span className="eyebrow">Review grid</span>
+              <span className="data text-[0.6875rem] text-faint">
+                {documents.length} × {columns.length}
+              </span>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="bg-sunken text-left">
+                  <tr className="border-y border-border bg-sunken text-left">
                     <th className="sticky left-0 z-[1] min-w-56 bg-sunken px-3 py-2.5 text-xs font-semibold tracking-[0.04em] text-muted">
                       Document
                     </th>
@@ -250,7 +263,7 @@ export default function ReviewGrid() {
                 </tbody>
               </table>
             </div>
-          </Card>
+          </>
         )}
       </div>
 
@@ -381,7 +394,7 @@ function CellView({ cell, type, onOpen }: { cell?: Cell; type?: string; onOpen: 
   return (
     <button onClick={onOpen} className="w-full text-left" aria-label="Show the citation for this answer">
       <AnswerValue value={cell.value} type={type} />
-      <span className="mt-1 inline-flex items-center gap-1 text-[0.6875rem] text-link group-hover:underline">
+      <span className="mt-1 inline-flex items-center gap-1 text-[0.6875rem] link group-hover:underline">
         <Quote className="size-3" />
         p.{cell.page_no}
       </span>

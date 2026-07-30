@@ -65,8 +65,12 @@ export function Button({
   title?: string;
   className?: string;
 }) {
+  // shrink-0 + whitespace-nowrap: a button label must never wrap. In a fixed
+  // height toolbar a wrapped label doesn't just look wrong, it overflows the
+  // row — the label is the shortest thing on screen, so the space comes from
+  // somewhere else.
   const base =
-    "inline-flex items-center justify-center gap-1.5 rounded-sm px-2 h-8 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-sm px-2 h-8 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none";
   const variants = {
     // Darkens on hover, never lightens. Exactly one of these per screen.
     primary: "bg-primary text-on-primary hover:bg-primary-hover",
@@ -131,7 +135,10 @@ export function Empty({ title, hint, action }: { title: string; hint?: string; a
 
 export function Toolbar({ title, subtitle, children }: { title: ReactNode; subtitle?: ReactNode; children?: ReactNode }) {
   return (
-    <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-border bg-background px-6 py-3">
+    // h-14 matches the sidebar brand row so the two bottom borders form one
+    // unbroken line. Never height this from padding — it drifts the moment a
+    // page has no subtitle.
+    <div className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b border-border bg-background px-6">
       <div className="min-w-0">
         <h1 className="truncate text-xl font-bold tracking-[-0.01em]">{title}</h1>
         {subtitle ? <p className="truncate text-xs text-muted">{subtitle}</p> : null}

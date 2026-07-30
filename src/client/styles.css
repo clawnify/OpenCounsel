@@ -38,7 +38,7 @@
   --faint: #94a3b8;
   --border: #e2e8f0;
   --ring: #2563eb;
-  --link: #2563eb;
+  --link: #1a202c; /* ink — links are NEVER blue; the underline is the affordance */
   --primary: #dd5164; /* the one coral CTA per screen */
   --primary-hover: #c53a4e;
   --on-primary: #ffffff;
@@ -61,7 +61,7 @@
     --faint: #6e7681;
     --border: #30363d;
     --ring: #4493f8;
-    --link: #4493f8;
+    --link: #e6edf3; /* ink on the dark canvas — still never blue */
     --primary: #dd5164; /* coral holds on the dark canvas — no inversion */
     --primary-hover: #c53a4e;
     --success: #3fb950;
@@ -87,6 +87,23 @@
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+  }
+}
+
+@layer base {
+  /* Links are ink with a hairline underline. Colour is reserved for the single
+     coral action, status and data — a blue link would be a second accent hue. */
+  a.link,
+  .link {
+    color: var(--link);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 2px;
+    transition: text-decoration-color 0.15s ease;
+  }
+  a.link:hover,
+  .link:hover {
+    text-decoration-color: var(--foreground);
   }
 }
 

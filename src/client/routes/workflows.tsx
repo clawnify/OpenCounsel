@@ -45,7 +45,7 @@ export default function Workflows() {
             <Eyebrow right={`${packs.length} available`}>Library</Eyebrow>
             <p className="mt-1 text-xs text-muted">
               Practitioner-authored review criteria, published under the MIT licence by{" "}
-              <a className="text-link hover:underline" href="https://github.com/Open-Legal-Products/mike-workflows">
+              <a className="link" href="https://github.com/Open-Legal-Products/mike-workflows">
                 Open Legal Products
               </a>
               . Importing copies a set into your workflows, where it is yours to edit.
@@ -92,7 +92,7 @@ export default function Workflows() {
                     {w.source_url ? (
                       <p className="mt-1 text-[0.6875rem] text-faint">
                         {w.author} ·{" "}
-                        <a className="text-link hover:underline" href={w.source_url}>
+                        <a className="link" href={w.source_url}>
                           {w.license}
                         </a>
                       </p>

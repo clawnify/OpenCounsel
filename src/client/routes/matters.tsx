@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { api, type Matter } from "../api";
-import { Button, Card, Empty, Eyebrow, Field, Input, Modal, Toolbar, Zone } from "../components/ui";
+import { Button, Empty, Field, Input, Modal, Toolbar } from "../components/ui";
 
 export default function Matters() {
   const [matters, setMatters] = useState<Matter[] | null>(null);
@@ -54,7 +54,8 @@ export default function Matters() {
         </Button>
       </Toolbar>
 
-      <div className="mx-auto max-w-[75rem] p-6">
+      {/* Full width, no max-width cap: a table page is the table. */}
+      <div className="p-6">
         {error ? <p className="mb-4 text-sm text-danger">{error}</p> : null}
 
         {matters && matters.length === 0 ? (
@@ -69,14 +70,17 @@ export default function Matters() {
             }
           />
         ) : (
-          <Card>
-            <Zone>
-              <Eyebrow right={`${open} open`}>Matters · {matters?.length ?? 0}</Eyebrow>
-            </Zone>
+          // Full-bleed: the header row and the row hairlines are the table's
+          // frame. A card border around it would draw a second, redundant one.
+          <>
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <span className="eyebrow">Matters · {matters?.length ?? 0}</span>
+              <span className="data text-[0.6875rem] text-faint">{open} open</span>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-sunken text-left">
+                  <tr className="border-y border-border bg-sunken text-left">
                     <th className="px-3 py-2.5 text-xs font-semibold tracking-[0.04em] text-muted">Matter</th>
                     <th className="px-3 py-2.5 text-xs font-semibold tracking-[0.04em] text-muted">Client</th>
                     <th className="px-3 py-2.5 text-right text-xs font-semibold tracking-[0.04em] text-muted">Documents</th>
@@ -87,7 +91,7 @@ export default function Matters() {
                   {(matters ?? []).map((m) => (
                     <tr key={m.id} className="border-t border-border hover:bg-sunken">
                       <td className="px-3 py-2.5">
-                        <Link to={`/matters/${m.id}`} className="text-link hover:underline">
+                        <Link to={`/matters/${m.id}`} className="link">
                           {m.name}
                         </Link>
                       </td>
@@ -112,7 +116,7 @@ export default function Matters() {
                 </tfoot>
               </table>
             </div>
-          </Card>
+          </>
         )}
       </div>
 

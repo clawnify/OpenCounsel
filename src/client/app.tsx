@@ -16,7 +16,11 @@ export default function App() {
   return (
     <div className="flex min-h-dvh">
       <aside className="hidden w-[16.25rem] shrink-0 flex-col border-r border-border bg-surface md:flex">
-        <div className="flex items-center gap-2 border-b border-border px-4 py-3.5">
+        {/* h-14 here and on Toolbar: the sidebar brand row and the page header
+            must share one height so their bottom borders form a single
+            unbroken line across the app. Padding-derived heights drift the
+            moment a page title gains or loses a subtitle. */}
+        <div className="flex h-14 items-center gap-2 border-b border-border px-4">
           <Scale className="size-4 text-primary" strokeWidth={2.5} />
           <span className="text-sm font-semibold">Open Counsel</span>
         </div>
