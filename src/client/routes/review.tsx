@@ -222,17 +222,18 @@ export default function ReviewGrid() {
                 {documents.length} × {columns.length}
               </span>
             </div>
-            <div className="overflow-x-auto">
+            {/* -mx-6 so the header fill and row hairlines reach both edges. */}
+            <div className="-mx-6 overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-y border-border bg-sunken text-left">
-                    <th className="sticky left-0 z-[1] min-w-56 bg-sunken px-3 py-2.5 text-xs font-semibold tracking-[0.04em] text-muted">
+                    <th className="sticky left-0 z-[1] min-w-56 bg-sunken py-2.5 pl-6 pr-3 text-xs font-semibold tracking-[0.04em] text-muted">
                       Document
                     </th>
                     {columns.map((col) => (
                       <th
                         key={col.id}
-                        className="min-w-56 border-l border-border px-3 py-2.5 text-xs font-semibold tracking-[0.04em] text-muted"
+                        className="min-w-56 border-l border-border px-3 py-2.5 last:pr-6 text-xs font-semibold tracking-[0.04em] text-muted"
                         title={col.question}
                       >
                         {col.question}
@@ -243,13 +244,13 @@ export default function ReviewGrid() {
                 <tbody>
                   {documents.map((doc) => (
                     <tr key={doc.id} className="border-t border-border">
-                      <td className="sticky left-0 z-[1] bg-surface px-3 py-2 text-[0.8125rem]">
+                      <td className="sticky left-0 z-[1] bg-surface py-2 pl-6 pr-3 text-[0.8125rem]">
                         <span className="line-clamp-2">{doc.name}</span>
                       </td>
                       {columns.map((col) => {
                         const cell = byKey.get(`${doc.id}:${col.id}`);
                         return (
-                          <td key={col.id} className="border-l border-border px-3 py-2 align-top">
+                          <td key={col.id} className="border-l border-border px-3 py-2 last:pr-6 align-top">
                             <CellView
                               cell={cell}
                               type={col.type}

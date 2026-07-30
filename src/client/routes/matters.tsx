@@ -77,39 +77,42 @@ export default function Matters() {
               <span className="eyebrow">Matters · {matters?.length ?? 0}</span>
               <span className="data text-[0.6875rem] text-faint">{open} open</span>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            {/* -mx-6 cancels the page padding so the header fill and the row
+                hairlines reach both edges; first:pl-6 / last:pr-6 puts the text
+                back in line with the page furniture above it. */}
+            <div className="-mx-6 overflow-x-auto">
+              <table className="w-full [&_td]:first:pl-6 [&_th]:first:pl-6">
                 <thead>
                   <tr className="border-y border-border bg-sunken text-left">
-                    <th className="px-3 py-2.5 text-xs font-semibold tracking-[0.04em] text-muted">Matter</th>
-                    <th className="px-3 py-2.5 text-xs font-semibold tracking-[0.04em] text-muted">Client</th>
-                    <th className="px-3 py-2.5 text-right text-xs font-semibold tracking-[0.04em] text-muted">Documents</th>
-                    <th className="px-3 py-2.5 text-right text-xs font-semibold tracking-[0.04em] text-muted">Reviews</th>
+                    <th className="px-3 py-2.5 first:pl-6 last:pr-6 text-xs font-semibold tracking-[0.04em] text-muted">Matter</th>
+                    <th className="px-3 py-2.5 first:pl-6 last:pr-6 text-xs font-semibold tracking-[0.04em] text-muted">Client</th>
+                    <th className="px-3 py-2.5 first:pl-6 last:pr-6 text-right text-xs font-semibold tracking-[0.04em] text-muted">Documents</th>
+                    <th className="px-3 py-2.5 first:pl-6 last:pr-6 text-right text-xs font-semibold tracking-[0.04em] text-muted">Reviews</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(matters ?? []).map((m) => (
                     <tr key={m.id} className="border-t border-border hover:bg-sunken">
-                      <td className="px-3 py-2.5">
+                      <td className="px-3 py-2.5 first:pl-6 last:pr-6">
                         <Link to={`/matters/${m.id}`} className="link">
                           {m.name}
                         </Link>
                       </td>
-                      <td className="px-3 py-2.5 text-[0.8125rem] text-muted">{m.client || "—"}</td>
-                      <td className="data px-3 py-2.5 text-right text-[0.8125rem]">{m.document_count ?? 0}</td>
-                      <td className="data px-3 py-2.5 text-right text-[0.8125rem]">{m.review_count ?? 0}</td>
+                      <td className="px-3 py-2.5 first:pl-6 last:pr-6 text-[0.8125rem] text-muted">{m.client || "—"}</td>
+                      <td className="data px-3 py-2.5 first:pl-6 last:pr-6 text-right text-[0.8125rem]">{m.document_count ?? 0}</td>
+                      <td className="data px-3 py-2.5 first:pl-6 last:pr-6 text-right text-[0.8125rem]">{m.review_count ?? 0}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="border-t border-border bg-sunken">
-                    <td className="px-3 py-2 text-xs text-muted" colSpan={2}>
+                    <td className="px-3 py-2 first:pl-6 text-xs text-muted" colSpan={2}>
                       Total
                     </td>
-                    <td className="data px-3 py-2 text-right text-xs text-muted">
+                    <td className="data px-3 py-2 last:pr-6 text-right text-xs text-muted">
                       {(matters ?? []).reduce((n, m) => n + (m.document_count ?? 0), 0)}
                     </td>
-                    <td className="data px-3 py-2 text-right text-xs text-muted">
+                    <td className="data px-3 py-2 last:pr-6 text-right text-xs text-muted">
                       {(matters ?? []).reduce((n, m) => n + (m.review_count ?? 0), 0)}
                     </td>
                   </tr>

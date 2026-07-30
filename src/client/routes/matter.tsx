@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AlertTriangle, FileText, Plus, Trash2, Upload } from "lucide-react";
 import { api, type Document, type Matter, type ReviewSummary, type Workflow } from "../api";
-import { Badge, Button, Card, Chip, Empty, Eyebrow, Field, Input, Modal, Toolbar, Zone } from "../components/ui";
+import { Badge, Button, Chip, Empty, Field, Input, Modal, Toolbar } from "../components/ui";
 
 export default function MatterPage() {
   const { id = "" } = useParams();
@@ -74,13 +74,15 @@ export default function MatterPage() {
         onChange={(e) => void upload(e.target.files)}
       />
 
-      <div className="mx-auto max-w-[75rem] space-y-4 p-6">
+      {/* No max-width: list pages run full width, like the matters table. */}
+      <div className="space-y-6 p-6">
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
-        <Card>
-          <Zone>
-            <Eyebrow right={`${ready} readable`}>Documents · {documents.length}</Eyebrow>
-          </Zone>
+        <section>
+          <div className="mb-3 flex items-baseline justify-between gap-3">
+            <span className="eyebrow">Documents · {documents.length}</span>
+            <span className="data text-[0.6875rem] text-faint">{ready} readable</span>
+          </div>
           {documents.length === 0 ? (
             <Empty
               title="No documents yet."
@@ -93,9 +95,9 @@ export default function MatterPage() {
               }
             />
           ) : (
-            <div className="divide-y divide-border">
+            <div className="-mx-6 divide-y divide-border border-y border-border">
               {documents.map((d) => (
-                <div key={d.id} className="flex items-center gap-3 px-4 py-2.5">
+                <div key={d.id} className="flex items-center gap-3 px-6 py-2.5">
                   <FileText className="size-4 shrink-0 text-faint" />
                   <span className="min-w-0 flex-1 truncate text-[0.8125rem]">{d.name}</span>
                   {d.extract_status === "ready" ? (
@@ -125,11 +127,11 @@ export default function MatterPage() {
             </div>
           )}
           {uploading > 0 ? (
-            <Zone className="text-xs text-muted">Uploading and extracting… {uploading} left</Zone>
+            <p className="mt-3 text-xs text-muted">Uploading and extracting… {uploading} left</p>
           ) : null}
           {failed.length > 0 ? (
-            <Zone>
-              <Eyebrow>Could not be read</Eyebrow>
+            <div className="mt-4">
+              <span className="eyebrow">Could not be read</span>
               <ul className="mt-2 space-y-1">
                 {failed.map((d) => (
                   <li key={d.id} className="text-xs text-muted">
@@ -137,14 +139,14 @@ export default function MatterPage() {
                   </li>
                 ))}
               </ul>
-            </Zone>
+            </div>
           ) : null}
-        </Card>
+        </section>
 
-        <Card>
-          <Zone>
-            <Eyebrow>Reviews · {reviews.length}</Eyebrow>
-          </Zone>
+        <section>
+          <div className="mb-3">
+            <span className="eyebrow">Reviews · {reviews.length}</span>
+          </div>
           {reviews.length === 0 ? (
             <Empty
               title="No reviews on this matter."
@@ -155,9 +157,9 @@ export default function MatterPage() {
               }
             />
           ) : (
-            <div className="divide-y divide-border">
+            <div className="-mx-6 divide-y divide-border border-y border-border">
               {reviews.map((r) => (
-                <Link key={r.id} to={`/reviews/${r.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-sunken">
+                <Link key={r.id} to={`/reviews/${r.id}`} className="flex items-center gap-3 px-6 py-2.5 hover:bg-sunken">
                   <span className="min-w-0 flex-1 truncate text-[0.8125rem]">{r.name}</span>
                   <Chip>{r.column_count} columns</Chip>
                   <span className="data text-[0.8125rem] text-muted">{r.answered} answered</span>
@@ -166,7 +168,7 @@ export default function MatterPage() {
               ))}
             </div>
           )}
-        </Card>
+        </section>
       </div>
 
       <NewReviewModal

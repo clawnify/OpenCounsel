@@ -37,23 +37,24 @@ export default function Workflows() {
     <>
       <Toolbar title="Workflows" subtitle="Column sets your team reuses across matters" />
 
-      <div className="mx-auto max-w-[75rem] space-y-4 p-6">
+      <div className="space-y-6 p-6">
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
-        <Card>
-          <Zone>
-            <Eyebrow right={`${packs.length} available`}>Library</Eyebrow>
-            <p className="mt-1 text-xs text-muted">
+        <section>
+          <div className="mb-1 flex items-baseline justify-between gap-3">
+            <span className="eyebrow">Library</span>
+            <span className="data text-[0.6875rem] text-faint">{packs.length} available</span>
+          </div>
+          <p className="mb-3 max-w-3xl text-xs text-muted">
               Practitioner-authored review criteria, published under the MIT licence by{" "}
               <a className="link" href="https://github.com/Open-Legal-Products/mike-workflows">
                 Open Legal Products
               </a>
               . Importing copies a set into your workflows, where it is yours to edit.
-            </p>
-          </Zone>
-          <div className="divide-y divide-border">
+          </p>
+          <div className="-mx-6 divide-y divide-border border-y border-border">
             {packs.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 px-4 py-2.5">
+              <div key={p.id} className="flex items-center gap-3 px-6 py-2.5">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate text-[0.8125rem]">{p.name}</span>
@@ -73,7 +74,7 @@ export default function Workflows() {
               </div>
             ))}
           </div>
-        </Card>
+        </section>
 
         {workflows && workflows.length === 0 ? (
           <Empty
