@@ -927,53 +927,80 @@ async function upsertCell(
   );
 }
 
-const runReview = createRoute({
-  method: "post",
-  path: "/api/reviews/{id}/run",
-  tags: ["Reviews"],
-  summary: "Hand the review to the org's agent",
-  description: "Returns the brief either way — when dispatch is unavailable the user pastes it into chat instead.",
-  request: {
-    params: z.object({ id: z.string() }),
-    body: {
-      content: {
-        "application/json": {
-          schema: z.object({ server_id: z.string().optional() }),
-        },
-      },
-    },
-  },
-  responses: {
-    200: ok(
-      "Dispatch outcome plus the brief",
-      z.object({
-        dispatched: z.boolean(),
-        brief: z.string(),
-        error: z.string().optional(),
-        servers: z.array(z.object({ id: z.string(), name: z.string().nullable(), status: z.string().nullable() })).optional(),
-      }),
-    ),
-    404: fail("No such review"),
-  },
+// ── Agent handoff ───────────────────────────────────────────────────
+//
+// A review runs on the org's agent, not in this app: reading long legal prose
+// is judgment work that takes minutes. These routes are the handoff.
+//
+// They are deliberately NOT on the OpenAPI surface. The agent is the *target*
+// of a dispatch, so publishing `/run` would let it hand a review to itself — a
+// loop the app has no way to break — and every published route costs context in
+// every agent turn. The agent's side of this contract is the routes it already
+// has: GET /api/documents/{id}/pages and POST /api/reviews/{id}/cells.
+
+/** The chosen agent, or null to let the platform resolve a single-agent org. */
+async function configuredServerId(): Promise<string | null> {
+  const row = await get<{ server_id: string }>("SELECT server_id FROM agent_config WHERE id = 1");
+  return row?.server_id || null;
+}
+
+app.get("/api/agent", async (c) => {
+  const servers = await listAgentServers(c.env);
+  return c.json({
+    // Distinct on purpose: "this deployment has no platform token" (off-platform)
+    // is a different problem from "the platform didn't answer" (transient).
+    available: dispatchAvailable(c.env),
+    reachable: servers !== null,
+    server_id: await configuredServerId(),
+    servers: servers ?? [],
+  });
 });
 
-app.openapi(runReview, async (c) => {
-  const { id } = c.req.valid("param");
-  const body = c.req.valid("json");
+app.put("/api/agent", async (c) => {
+  let body: { server_id?: unknown };
+  try {
+    body = (await c.req.json()) as typeof body;
+  } catch {
+    return c.json({ error: "Invalid JSON" }, 400);
+  }
+  const wanted = typeof body.server_id === "string" ? body.server_id.trim() : "";
+
+  // Validated against the live list rather than stored blind: a mistyped or
+  // decommissioned id would otherwise wedge every future review behind a
+  // platform 404 the user has no way to interpret.
+  if (wanted) {
+    const servers = await listAgentServers(c.env);
+    if (servers === null) return c.json({ error: "Can't reach the platform to verify that agent." }, 503);
+    if (!servers.some((s) => s.id === wanted)) return c.json({ error: "That agent isn't in your organization." }, 400);
+  }
+
+  await run(
+    `INSERT INTO agent_config (id, server_id, updated_at) VALUES (1, ?, datetime('now'))
+     ON CONFLICT(id) DO UPDATE SET server_id = excluded.server_id, updated_at = excluded.updated_at`,
+    [wanted],
+  );
+  return c.json({ server_id: wanted || null });
+});
+
+/** Hand a review to the agent. Returns the brief either way, so an unreachable
+ *  platform degrades to "paste this into chat" rather than a dead end. */
+app.post("/api/reviews/:id/run", async (c) => {
+  const id = c.req.param("id");
 
   const review = await get<{ id: string; name: string; matter_id: string }>(
     "SELECT id, name, matter_id FROM reviews WHERE id = ?",
     [id],
   );
-  if (!review) return c.json({ error: "No such review" } as never, 404);
+  if (!review) return c.json({ error: "No such review" }, 404);
 
   const columns = await query<{ key: string; question: string; hint: string; type: string; options: string }>(
     "SELECT key, question, hint, type, options FROM review_columns WHERE review_id = ? ORDER BY position",
     [id],
   );
-  const documentCount = await countOf("SELECT COUNT(*) AS n FROM documents WHERE matter_id = ? AND extract_status = 'ready'", [
-    review.matter_id,
-  ]);
+  const documentCount = await countOf(
+    "SELECT COUNT(*) AS n FROM documents WHERE matter_id = ? AND extract_status = 'ready'",
+    [review.matter_id],
+  );
 
   const brief = reviewBrief({
     reviewId: id,
@@ -985,18 +1012,18 @@ app.openapi(runReview, async (c) => {
 
   const result = await dispatchTask(c.env, {
     instruction: brief,
-    serverId: body?.server_id ?? null,
-    // Keyed on the review *and* its current cell count, so re-running after
-    // more documents arrive is a new task rather than a silently-deduplicated
-    // repeat of the first one.
+    serverId: await configuredServerId(),
+    // Keyed on the review *and* how many documents it covers, so re-running
+    // after more documents arrive is a new task rather than a silently
+    // deduplicated repeat of the first one.
     idempotencyKey: `review:${id}:${documentCount}`,
   });
 
   if (result.ok) {
     await run("UPDATE reviews SET status = 'running', updated_at = datetime('now') WHERE id = ?", [id]);
-    return c.json({ dispatched: true, brief } as never);
+    return c.json({ dispatched: true, brief });
   }
-  return c.json({ dispatched: false, brief, error: result.error, servers: result.servers } as never);
+  return c.json({ dispatched: false, brief, error: result.error, servers: result.servers });
 });
 
 const exportReview = createRoute({
@@ -1227,25 +1254,5 @@ app.openapi(deleteWorkflow, async (c) => {
 });
 
 // ── Agents (for the settings screen) ─────────────────────────────────
-
-const getAgents = createRoute({
-  method: "get",
-  path: "/api/agents",
-  tags: ["Settings"],
-  summary: "Agents this app can hand a review to",
-  responses: {
-    200: ok(
-      "Agent availability",
-      z.object({
-        available: z.boolean(),
-        servers: z.array(z.object({ id: z.string(), name: z.string().nullable(), status: z.string().nullable() })).nullable(),
-      }),
-    ),
-  },
-});
-
-app.openapi(getAgents, async (c) => {
-  return c.json({ available: dispatchAvailable(c.env), servers: await listAgentServers(c.env) } as never);
-});
 
 export default app;

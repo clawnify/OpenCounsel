@@ -116,3 +116,13 @@ create table if not exists workflows (
   created_at   text not null default (datetime('now'))
 );
 create index if not exists idx_workflows_created on workflows (created_at desc);
+
+-- Which agent runs reviews. A single row by construction: the choice is a
+-- property of the deployment, not of any matter. Left empty when the org has
+-- one agent — the platform resolves it — and only has to be set when there are
+-- several, because then the platform refuses to guess.
+create table if not exists agent_config (
+  id         integer primary key check (id = 1),
+  server_id  text not null default '',
+  updated_at text default (datetime('now'))
+);

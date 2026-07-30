@@ -1,13 +1,15 @@
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
-import { Briefcase, ListChecks, Scale } from "lucide-react";
+import { Briefcase, ListChecks, Scale, Settings2 } from "lucide-react";
 import Matters from "./routes/matters";
 import Matter from "./routes/matter";
 import ReviewGrid from "./routes/review";
 import Workflows from "./routes/workflows";
+import Settings from "./routes/settings";
 
 const NAV = [
   { to: "/matters", label: "Matters", icon: Briefcase },
   { to: "/workflows", label: "Workflows", icon: ListChecks },
+  { to: "/settings", label: "Settings", icon: Settings2 },
 ];
 
 export default function App() {
@@ -48,6 +50,7 @@ export default function App() {
           <Route path="/matters/:id" element={<Matter />} />
           <Route path="/reviews/:id" element={<ReviewGrid />} />
           <Route path="/workflows" element={<Workflows />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>
     </div>

@@ -137,10 +137,23 @@ export const api = {
     request<{ id: string }>(`/api/matters/${matterId}/reviews`, { method: "POST", body: JSON.stringify(body) }),
   cells: (reviewId: string, params = "limit=100") =>
     request<{ cells: Cell[]; total: number }>(`/api/reviews/${reviewId}/cells?${params}`),
-  runReview: (id: string, serverId?: string) =>
+  runReview: (id: string) =>
     request<{ dispatched: boolean; brief: string; error?: string }>(`/api/reviews/${id}/run`, {
       method: "POST",
-      body: JSON.stringify(serverId ? { server_id: serverId } : {}),
+      body: "{}",
+    }),
+
+  agent: () =>
+    request<{
+      available: boolean;
+      reachable: boolean;
+      server_id: string | null;
+      servers: { id: string; name: string | null; status: string | null }[];
+    }>("/api/agent"),
+  setAgentServer: (serverId: string | null) =>
+    request<{ server_id: string | null }>("/api/agent", {
+      method: "PUT",
+      body: JSON.stringify({ server_id: serverId ?? "" }),
     }),
   deleteReview: (id: string) => request<{ ok: boolean }>(`/api/reviews/${id}`, { method: "DELETE" }),
 
