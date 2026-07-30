@@ -117,9 +117,13 @@ export function verifyQuote(
     return { ok: true, page: match.pages[0] };
   }
   if (!match.pages.includes(claimedPage)) {
+    const elsewhere =
+      match.pages.length > 1
+        ? `; it appears on ${match.pages.length} other pages (first: ${match.pages[0]})`
+        : "";
     return {
       ok: false,
-      reason: `quote was not found on page ${claimedPage}`,
+      reason: `quote was not found on page ${claimedPage}${elsewhere}`,
       foundOnPage: match.pages[0],
     };
   }
@@ -135,14 +139,23 @@ export function verifyQuote(
  * citations, which is exactly the false negative that would push a user to
  * turn verification off.
  *
- * Returns every page the match touches; citing either end of a spanning quote
- * is defensible, so both are accepted.
+ * Returns **every** page the quote occurs on, not just the first.
+ *
+ * That distinction is load-bearing. Contracts repeat themselves relentlessly —
+ * defined terms, running headers, a covenant restated in every schedule — so a
+ * passage quoted from page 700 is frequently also present on page 1. Returning
+ * only the first hit meant a reviewer who cited the page they actually read was
+ * told their quote "was not found" there. That is a false rejection in the one
+ * guarantee this app makes, and boilerplate would have triggered it constantly.
+ *
+ * Also returns both pages when the quote straddles a page break; citing either
+ * end of a spanning quote is defensible, so both are accepted.
  */
 function locate(needle: string, pages: PageText[]): { pages: number[] } | null {
   const prints = pages.map((p) => ({ page_no: p.page_no, text: fingerprint(p.text) }));
 
-  const single = prints.find((p) => p.text.includes(needle));
-  if (single) return { pages: [single.page_no] };
+  const hits = prints.filter((p) => p.text.includes(needle)).map((p) => p.page_no);
+  if (hits.length) return { pages: hits };
 
   for (let i = 0; i < prints.length - 1; i++) {
     if ((prints[i].text + prints[i + 1].text).includes(needle)) {

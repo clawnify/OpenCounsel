@@ -131,6 +131,50 @@ const CellSchema = z
 
 const uid = () => crypto.randomUUID();
 
+/**
+ * Write a document's pages in as few statements as the database allows.
+ *
+ * One INSERT per page is the obvious loop and it fails in production only —
+ * D1 caps a Worker invocation at 1000 queries, and a 900-page credit agreement
+ * (measured: real, not hypothetical) sits right against that ceiling while the
+ * local SQLite used in development enforces no such limit. Multi-row inserts
+ * take the same document to ~30 statements.
+ *
+ * The two chunk bounds are both D1 limits, not guesses: 100 bound parameters
+ * per query (3 per row → 33 rows), and a cap on how much payload one statement
+ * may carry.
+ */
+const MAX_ROWS_PER_INSERT = 33;
+const MAX_BYTES_PER_INSERT = 900_000;
+/** D1's maximum row size is 2 MB; leave room for the rest of the row. */
+const MAX_PAGE_CHARS = 1_800_000;
+
+async function insertPages(docId: string, pages: { page_no: number; text: string }[]) {
+  let batch: { page_no: number; text: string }[] = [];
+  let bytes = 0;
+
+  const flush = async () => {
+    if (!batch.length) return;
+    const values = batch.map(() => "(?, ?, ?)").join(", ");
+    await run(
+      `INSERT INTO document_pages (document_id, page_no, text) VALUES ${values}`,
+      batch.flatMap((p) => [docId, p.page_no, p.text]),
+    );
+    batch = [];
+    bytes = 0;
+  };
+
+  for (const page of pages) {
+    const text = page.text.length > MAX_PAGE_CHARS ? page.text.slice(0, MAX_PAGE_CHARS) : page.text;
+    if (batch.length >= MAX_ROWS_PER_INSERT || bytes + text.length > MAX_BYTES_PER_INSERT) {
+      await flush();
+    }
+    batch.push({ page_no: page.page_no, text });
+    bytes += text.length;
+  }
+  await flush();
+}
+
 async function matterOr404(id: string) {
   return get<{ id: string; name: string }>("SELECT id, name FROM matters WHERE id = ?", [id]);
 }
@@ -391,13 +435,7 @@ app.openapi(uploadDocument, async (c) => {
 
   try {
     const { pages, locatorKind } = await extract(bytes, file.name, mime);
-    for (const p of pages) {
-      await run("INSERT INTO document_pages (document_id, page_no, text) VALUES (?, ?, ?)", [
-        docId,
-        p.page_no,
-        p.text,
-      ]);
-    }
+    await insertPages(docId, pages);
     await run(
       "UPDATE documents SET page_count = ?, locator_kind = ?, extract_status = 'ready' WHERE id = ?",
       [pages.length, locatorKind, docId],

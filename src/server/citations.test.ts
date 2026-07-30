@@ -104,6 +104,28 @@ describe("verifyQuote", () => {
     expect(verifyQuote(quote, 9, split).ok).toBe(false);
   });
 
+  it("accepts a repeated passage on whichever page it was read from", () => {
+    // Contracts restate covenants in every schedule, so a passage quoted from
+    // page 700 is usually also on page 1. Matching only the first occurrence
+    // rejected the reviewer who cited the page they actually read.
+    const repeated = [
+      { page_no: 1, text: "The Borrower shall not incur additional Indebtedness without consent." },
+      { page_no: 400, text: "The Borrower shall not incur additional Indebtedness without consent." },
+      { page_no: 700, text: "The Borrower shall not incur additional Indebtedness without consent." },
+    ];
+    const quote = "shall not incur additional Indebtedness without consent";
+    for (const page of [1, 400, 700]) {
+      expect(verifyQuote(quote, page, repeated).ok).toBe(true);
+    }
+    // A page it genuinely isn't on is still refused, and the hint says where.
+    const miss = verifyQuote(quote, 250, repeated);
+    expect(miss.ok).toBe(false);
+    if (!miss.ok) {
+      expect(miss.foundOnPage).toBe(1);
+      expect(miss.reason).toMatch(/appears on 3 other pages/);
+    }
+  });
+
   it("refuses a quote too short to identify a passage", () => {
     const r = verifyQuote("New York", 2, pages);
     expect(r.ok).toBe(false);
