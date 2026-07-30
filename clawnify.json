@@ -1,0 +1,34 @@
+{
+  "$schema": "https://app.clawnify.com/schema/v1/clawnify.json",
+  "version": 1,
+  "name": "Open Counsel",
+  "description": "Matter-scoped document review for legal teams. Upload contracts and diligence packs, define the questions once, and let your agent fill a spreadsheet-style review grid across every document — where each answer is only accepted if its supporting quote is verifiably present in the source text. Save proven column sets as firm-wide workflows. An open-source alternative to Harvey and Legora.",
+  "icon": "icon.svg",
+  "tags": ["legal", "contracts", "document-review", "diligence", "due-diligence"],
+
+  "app": {
+    "framework": "react+hono",
+    "database": true,
+    "storage": true
+  },
+
+  "deploy": {
+    "title": "Deploy your Open Counsel",
+    "subtitle": "Matter workspaces, cited document review, and reusable firm workflows.",
+    "prompts": [
+      {
+        "key": "firm_name",
+        "label": "Firm or team name",
+        "placeholder": "e.g. Northwind Legal",
+        "required": true
+      },
+      {
+        "key": "practice_areas",
+        "label": "What do you review most?",
+        "placeholder": "e.g. NDAs, credit agreements, commercial leases"
+      }
+    ]
+  },
+
+  "agent": "agent.md"
+}
