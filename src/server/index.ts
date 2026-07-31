@@ -5,7 +5,14 @@ import { extract, isDocx, isSupported, UnsupportedFileError } from "./extract.js
 import { buildRedline, redlineAvailable, type EditVerdict } from "./redline.js";
 import { toCsv } from "./export.js";
 import { catalogue, findPack } from "./packs.js";
-import { dispatchAvailable, dispatchTask, listAgentServers, reviewBrief, revisionBrief } from "./agent.js";
+import {
+  dispatchAvailable,
+  dispatchTask,
+  listAgentServers,
+  reviewBrief,
+  revisionBrief,
+  MAX_USER_INSTRUCTION_CHARS,
+} from "./agent.js";
 
 type Env = {
   Bindings: {
@@ -1092,10 +1099,10 @@ app.post("/api/reviews/:id/run", async (c) => {
   );
   if (!review) return c.json({ error: "No such review" }, 404);
 
-  const columns = await query<{ key: string; question: string; hint: string; type: string; options: string }>(
-    "SELECT key, question, hint, type, options FROM review_columns WHERE review_id = ? ORDER BY position",
-    [id],
-  );
+  // Counts, not the columns themselves: the agent reads those from
+  // GET /api/reviews/{id}. See reviewBrief — an instruction carrying 21
+  // imported hints is past the platform's cap and cannot be dispatched at all.
+  const columnCount = await countOf("SELECT COUNT(*) AS n FROM review_columns WHERE review_id = ?", [id]);
   const documentCount = await countOf(
     "SELECT COUNT(*) AS n FROM documents WHERE matter_id = ? AND extract_status = 'ready'",
     [review.matter_id],
@@ -1106,7 +1113,7 @@ app.post("/api/reviews/:id/run", async (c) => {
     reviewName: review.name,
     appUrl: new URL(c.req.url).origin,
     documentCount,
-    questions: columns,
+    columnCount,
   });
 
   const result = await dispatchTask(c.env, {
@@ -1137,6 +1144,17 @@ app.post("/api/documents/:id/propose", async (c) => {
   }
   const instruction = typeof body.instruction === "string" ? body.instruction.trim() : "";
   if (!instruction) return c.json({ error: "Say what you want changed" }, 400);
+  // Refused, not silently shortened. This text is the whole point of the
+  // request, and truncating it would send the agent off with half an ask it
+  // has no way to know was cut.
+  if (instruction.length > MAX_USER_INSTRUCTION_CHARS) {
+    return c.json(
+      {
+        error: `Keep the request under ${MAX_USER_INSTRUCTION_CHARS} characters — it is an instruction a machine acts on, not a memo. Split a long list into separate rounds.`,
+      },
+      400,
+    );
+  }
 
   const doc = await get<{ id: string; name: string; mime: string; extract_status: string }>(
     "SELECT id, name, mime, extract_status FROM documents WHERE id = ?",
