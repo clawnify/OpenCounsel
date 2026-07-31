@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { AlertTriangle, FileText, Plus, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, FileText, Loader2, Plus, Trash2, Upload } from "lucide-react";
 import { api, type Document, type Matter, type ReviewSummary, type Workflow } from "../api";
 import { Badge, Button, Chip, Empty, Field, Input, Modal, Toolbar } from "../components/ui";
 
@@ -11,6 +11,8 @@ export default function MatterPage() {
   const [reviews, setReviews] = useState<ReviewSummary[]>([]);
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [uploading, setUploading] = useState(0);
+  /** Document ids currently having their text read, so each row can say so. */
+  const [extracting, setExtracting] = useState<Set<string>>(new Set());
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -32,21 +34,54 @@ export default function MatterPage() {
     void load().catch((e) => setError((e as Error).message));
   }, [id]);
 
+  /**
+   * Upload, then read. Two phases on purpose.
+   *
+   * Storing the file is fast; reading a long agreement is not — 43 seconds for
+   * 900 pages. Doing both in one request meant the user watched a dead button
+   * for all of it. Now every file appears in the list straight away as
+   * `pending`, and each one turns `ready` as its text is read, so progress is
+   * visible per document instead of being one opaque wait.
+   */
   async function upload(files: FileList | null) {
     if (!files?.length) return;
     setError("");
     setUploading(files.length);
-    // Sequential rather than parallel: extraction runs inside the request, and
-    // ten concurrent PDF parses in one isolate is how you find its memory limit.
+
+    const uploaded: string[] = [];
     for (const file of Array.from(files)) {
       try {
-        await api.upload(id, file);
+        const doc = await api.upload(id, file);
+        uploaded.push(doc.id);
       } catch (err) {
         setError(`${file.name}: ${(err as Error).message}`);
       }
       setUploading((n) => n - 1);
     }
     await load();
+    await extractAll(uploaded);
+  }
+
+  /**
+   * Sequential, not parallel: ten concurrent PDF parses in one isolate is how
+   * you find its memory limit.
+   */
+  async function extractAll(ids: string[]) {
+    for (const docId of ids) {
+      setExtracting((s) => new Set(s).add(docId));
+      try {
+        await api.extract(docId);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setExtracting((s) => {
+          const next = new Set(s);
+          next.delete(docId);
+          return next;
+        });
+      }
+      await load();
+    }
   }
 
   const ready = documents.filter((d) => d.extract_status === "ready").length;
@@ -111,7 +146,20 @@ export default function MatterPage() {
                       unreadable
                     </Badge>
                   ) : null}
-                  {d.extract_status === "pending" ? <Badge tone="warning">extracting</Badge> : null}
+                  {d.extract_status === "pending" && extracting.has(d.id) ? (
+                    <Badge tone="warning">
+                      <Loader2 className="size-3 animate-spin" />
+                      reading…
+                    </Badge>
+                  ) : null}
+                  {d.extract_status === "pending" && !extracting.has(d.id) ? (
+                    // Left pending by a dropped connection or a closed tab. The
+                    // file is stored; only its text is missing, so offer the
+                    // half that did not finish rather than a re-upload.
+                    <Button onClick={() => void extractAll([d.id])} title="Read this document's text">
+                      Read text
+                    </Button>
+                  ) : null}
                   <Button
                     variant="ghost"
                     title={`Delete ${d.name}`}
@@ -126,8 +174,12 @@ export default function MatterPage() {
               ))}
             </div>
           )}
-          {uploading > 0 ? (
-            <p className="mt-3 text-xs text-muted">Uploading and extracting… {uploading} left</p>
+          {uploading > 0 ? <p className="mt-3 text-xs text-muted">Uploading… {uploading} left</p> : null}
+          {extracting.size > 0 ? (
+            <p className="mt-3 text-xs text-muted">
+              Reading {extracting.size} document{extracting.size === 1 ? "" : "s"} — a long agreement takes a
+              while, and each one becomes reviewable as it finishes.
+            </p>
           ) : null}
           {failed.length > 0 ? (
             <div className="mt-4">

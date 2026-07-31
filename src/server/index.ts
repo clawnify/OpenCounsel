@@ -421,6 +421,8 @@ app.openapi(uploadDocument, async (c) => {
   if (!(file instanceof File)) return c.json({ error: "No file in the request" } as never, 415);
 
   const mime = file.type || "";
+  // Rejected on the filename before a byte is stored — a caller uploading a
+  // .doc should not wait for a round trip to hear it cannot be read.
   if (!isSupported(file.name, mime)) {
     return c.json(
       {
@@ -440,25 +442,74 @@ app.openapi(uploadDocument, async (c) => {
     [docId, id, file.name, r2Key, mime, bytes.byteLength],
   );
 
-  try {
-    const { pages, locatorKind } = await extract(bytes, file.name, mime);
-    await insertPages(docId, pages);
-    await run(
-      "UPDATE documents SET page_count = ?, locator_kind = ?, extract_status = 'ready' WHERE id = ?",
-      [pages.length, locatorKind, docId],
-    );
-  } catch (err) {
-    // The file is kept: a failed extraction is recoverable (re-run OCR and
-    // re-upload), and deleting the user's upload on our failure is not our call.
-    const message = err instanceof UnsupportedFileError ? err.message : `Extraction failed: ${(err as Error).message}`;
-    await run("UPDATE documents SET extract_status = 'failed', extract_error = ? WHERE id = ?", [
-      message.slice(0, 500),
-      docId,
-    ]);
-  }
-
+  // Upload ends here, at the speed of an R2 put. Reading the text is a separate
+  // call: extracting a 900-page agreement took 43 seconds in production, and
+  // doing it inside the upload meant the user watched a dead button for all of
+  // it with no idea whether anything was happening. The document now appears
+  // immediately as `pending`, and the client extracts it as a second step it
+  // can show progress for, per document.
   const doc = await get<Record<string, unknown>>("SELECT * FROM documents WHERE id = ?", [docId]);
   return c.json(doc as never, 201);
+});
+
+const extractDocument = createRoute({
+  method: "post",
+  path: "/api/documents/{id}/extract",
+  tags: ["Documents"],
+  summary: "Read a pending document's text",
+  description:
+    "The second half of an upload. Idempotent: a document that is already ready is returned untouched, so a retry after a dropped connection costs nothing. Call this on any document left `pending` — the upload stores the file, this is what makes it citable.",
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: ok("The document, now ready or failed", DocumentSchema),
+    404: fail("No such document"),
+  },
+});
+
+app.openapi(extractDocument, async (c) => {
+  const { id } = c.req.valid("param");
+  const doc = await get<{ id: string; name: string; mime: string; r2_key: string; extract_status: string }>(
+    "SELECT id, name, mime, r2_key, extract_status FROM documents WHERE id = ?",
+    [id],
+  );
+  if (!doc) return c.json({ error: "No such document" } as never, 404);
+
+  if (doc.extract_status === "ready") {
+    const current = await get<Record<string, unknown>>("SELECT * FROM documents WHERE id = ?", [id]);
+    return c.json(current as never);
+  }
+
+  const object = await c.env.UPLOADS.get(doc.r2_key);
+  if (!object) {
+    await run("UPDATE documents SET extract_status = 'failed', extract_error = ? WHERE id = ?", [
+      "the stored file is missing",
+      id,
+    ]);
+  } else {
+    try {
+      const bytes = await object.arrayBuffer();
+      const { pages, locatorKind } = await extract(bytes, doc.name, doc.mime);
+      // Re-runnable: a retry after a partial write must not double the pages.
+      await run("DELETE FROM document_pages WHERE document_id = ?", [id]);
+      await insertPages(id, pages);
+      await run(
+        "UPDATE documents SET page_count = ?, locator_kind = ?, extract_status = 'ready', extract_error = '' WHERE id = ?",
+        [pages.length, locatorKind, id],
+      );
+    } catch (err) {
+      // The file is kept: a failed extraction is recoverable (re-run OCR and
+      // re-upload), and deleting the user's upload on our failure is not our call.
+      const message =
+        err instanceof UnsupportedFileError ? err.message : `Extraction failed: ${(err as Error).message}`;
+      await run("UPDATE documents SET extract_status = 'failed', extract_error = ? WHERE id = ?", [
+        message.slice(0, 500),
+        id,
+      ]);
+    }
+  }
+
+  const updated = await get<Record<string, unknown>>("SELECT * FROM documents WHERE id = ?", [id]);
+  return c.json(updated as never);
 });
 
 const getDocumentPages = createRoute({

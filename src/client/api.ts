@@ -125,6 +125,7 @@ export const api = {
     form.append("file", file);
     return request<Document>(`/api/matters/${matterId}/documents`, { method: "POST", body: form });
   },
+  extract: (id: string) => request<Document>(`/api/documents/${id}/extract`, { method: "POST" }),
   deleteDocument: (id: string) => request<{ ok: boolean }>(`/api/documents/${id}`, { method: "DELETE" }),
   pages: (id: string, fromPage: number, limit = 5) =>
     request<{ document: { name: string; page_count: number; locator_kind: string }; pages: { page_no: number; text: string }[] }>(

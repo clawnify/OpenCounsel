@@ -33,8 +33,13 @@ be rejected.
    "Remedies" and the hint is the actual instruction: which clauses to look at,
    what to note, what counts as an answer. Answering from the label alone is
    how a column comes back technically true and useless.
-2. **List the documents.** `GET /api/matters/{matter_id}/documents`. Skip any
-   whose `extract_status` is not `ready`; there is no text to cite.
+2. **List the documents.** `GET /api/matters/{matter_id}/documents`.
+   - `ready` — has text, cite away.
+   - `pending` — the file is stored but its text was never read, usually because
+     the uploader's tab closed mid-way. **`POST /api/documents/{id}/extract`**
+     and carry on; it is idempotent and safe to repeat.
+   - `failed` — no text layer (usually a scan). Skip it and tell the user it
+     needs OCR. Do not try to read it another way.
 3. **Read one document fully.** `GET /api/documents/{id}/pages?from_page=1&limit=5`,
    then keep going. **Read every page** — governing law is often on page 1 but
    the term and termination clauses are near the end, and answering from the
