@@ -2,9 +2,9 @@
   "$schema": "https://app.clawnify.com/schema/v1/clawnify.json",
   "version": 1,
   "name": "Open Counsel",
-  "description": "Matter-scoped document review for legal teams. Upload contracts and diligence packs, define the questions once, and let your agent fill a spreadsheet-style review grid across every document — where each answer is only accepted if its supporting quote is verifiably present in the source text. Save proven column sets as firm-wide workflows. An open-source alternative to Harvey and Legora.",
+  "description": "Matter-scoped document review and redlining for legal teams. Upload contracts and diligence packs, define the questions once, and let your agent fill a spreadsheet-style review grid across every document — where each answer is only accepted if its supporting quote is verifiably present in the source text. Then propose changes and get a Word file with real tracked changes. Save proven column sets as firm-wide workflows. An open-source alternative to Harvey and Legora.",
   "icon": "icon.svg",
-  "tags": ["legal", "contracts", "document-review", "diligence", "due-diligence"],
+  "tags": ["legal", "contracts", "document-review", "redline", "diligence", "due-diligence"],
 
   "app": {
     "framework": "react+hono",

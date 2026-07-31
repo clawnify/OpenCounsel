@@ -194,3 +194,51 @@ export function reviewBrief(opts: {
     `Work document by document and post as you go, so progress is visible.`,
   ].join("\n");
 }
+
+/**
+ * The redline instruction. Same two audiences as `reviewBrief`, same reason for
+ * living beside it.
+ *
+ * It leads with the uniqueness rule because that is the one thing an agent gets
+ * wrong from good instincts: the natural anchor for "cap the liability" is
+ * "liability of the Supplier", which in a real agreement appears in the cap, the
+ * indemnity and two schedules. Being told up front costs one sentence; being
+ * told by rejection costs a round trip per edit and produces a shorter, vaguer
+ * anchor on the retry.
+ */
+export function revisionBrief(opts: {
+  documentId: string;
+  documentName: string;
+  appUrl: string;
+  instruction: string;
+}): string {
+  return [
+    `Propose changes to "${opts.documentName}" in Open Counsel (${opts.appUrl}).`,
+    ``,
+    `What the client wants changed:`,
+    opts.instruction,
+    ``,
+    `Read the document first with GET /api/documents/${opts.documentId}/pages`,
+    `(paginated — read every page). Then POST the changes to`,
+    `/api/documents/${opts.documentId}/revisions:`,
+    ``,
+    `  { "name": "…", "edits": [ { "anchor": "…", "replacement": "…", "reason": "…" } ] }`,
+    ``,
+    `Each edit names the text it replaces, copied verbatim, and each anchor must`,
+    `identify EXACTLY ONE passage. An anchor that matches twice is rejected — not`,
+    `applied to the first hit — because the second hit is a clause nobody chose to`,
+    `change. Contracts restate the same wording in every schedule, so include the`,
+    `clause number or the words either side until the anchor is unique. Keep it`,
+    `inside a single paragraph: an anchor spanning a paragraph break cannot be`,
+    `replaced. To delete a phrase, anchor a neighbouring word too and give that`,
+    `word back as the replacement.`,
+    ``,
+    `Change only what was asked for. Everything you do not anchor stays exactly as`,
+    `it is in the file — that is what makes the redline readable, so a rewrite of`,
+    `untouched prose is worse than no edit.`,
+    ``,
+    `Rejections come back in the response with a reason; fix those and re-send`,
+    `only the failures. Then tell the user what you proposed and why — a human`,
+    `approves the edits and builds the redline.`,
+  ].join("\n");
+}

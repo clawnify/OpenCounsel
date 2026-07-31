@@ -30,14 +30,35 @@ The check is mechanical — a normalised substring match against the extracted t
 - **Three honest cell states** — *answered* (verified), *not addressed* (the document genuinely doesn't say), *unresolved* (evidence failed the check). The third never looks like the first.
 - **A library of review criteria, built in** — 11 practitioner-authored column sets (NDA, credit agreement, commercial lease, SPA, shareholder agreement, LPA, employment, supply, commercial agreement, change-of-control, e-discovery — 166 columns in total), bundled under the MIT licence. Import one and it becomes yours to edit.
 - **Workflows** — save the columns of a review that worked; the next matter starts from it in one click.
+- **Redlining** — say what you want changed and get a Word file with real tracked changes, ready to send to the other side.
 - **CSV export** — the page and quote travel with every answer, so the evidence doesn't get lost when the grid leaves the app.
+
+## Redlining
+
+Reviewing a contract is half the job. The other half is changing it — and that has to leave in the format the negotiation actually happens in: a `.docx` with tracked changes that opposing counsel opens in Word and accepts or rejects clause by clause. A list of suggestions in a web app is not that.
+
+Say what you want ("cap our liability at 12 months' fees, make confidentiality mutual"), and your agent reads the document and proposes **anchored edits** — each one quoting the exact text it replaces. You approve them, and the app produces the Word file.
+
+The same discipline as citations applies, one notch tighter. An anchor must name **exactly one** passage in the document:
+
+```
+"the aggregate liability of the Supplier shall be unlimited"
+    ├── found once   → this clause will be changed
+    ├── found twice  → refused: replacing it would rewrite a clause nobody chose
+    └── not found    → refused: it isn't in the document
+```
+
+Contracts restate the same wording in every schedule, which is exactly why the first match is never assumed to be the intended one.
+
+Everything nobody anchored comes through **byte-identical** — numbering, styles, tables, footnotes — because the file is edited, never re-authored. So the tracked changes are the edits you approved and nothing else, instead of fifty reflowed paragraphs with the four real changes buried inside them.
 
 ## How it works
 
 | | |
 |---|---|
-| **The app** | stores documents, extracts their text, holds the grid, and verifies every citation |
-| **Your agent** | reads the documents and answers the questions |
+| **The app** | stores documents, extracts their text, holds the grid, verifies every citation and every anchor, and writes the redline |
+| **Your agent** | reads the documents, answers the questions, and proposes the changes |
+| **You** | approve |
 
 The app has no model provider keys and no chat window, on purpose — your Clawnify agent already is the reader, reachable from the dashboard, WhatsApp or email. Press **Run review** and the review is handed to it; if it can't be reached, you get the brief to paste into chat instead.
 
@@ -56,7 +77,7 @@ pnpm typecheck
 pnpm build
 ```
 
-Off-platform there is no agent to dispatch to — **Run review** hands you the brief to copy instead, and everything else works normally.
+Off-platform there is no agent to dispatch to — **Run review** and **Propose changes** hand you the brief to copy instead. Building a redline needs the platform's document service, so that one is only available once deployed; the edits and their verification work locally.
 
 ## Deploy
 

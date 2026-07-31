@@ -1,10 +1,11 @@
 import { createApp, createRoute, user, z } from "@clawnify/app";
 import { get, query, run } from "./db.js";
-import { verifyQuote, type PageText } from "./citations.js";
-import { extract, isSupported, UnsupportedFileError } from "./extract.js";
+import { verifyAnchor, verifyQuote, type PageText } from "./citations.js";
+import { extract, isDocx, isSupported, UnsupportedFileError } from "./extract.js";
+import { buildRedline, redlineAvailable, type EditVerdict } from "./redline.js";
 import { toCsv } from "./export.js";
 import { catalogue, findPack } from "./packs.js";
-import { dispatchAvailable, dispatchTask, listAgentServers, reviewBrief } from "./agent.js";
+import { dispatchAvailable, dispatchTask, listAgentServers, reviewBrief, revisionBrief } from "./agent.js";
 
 type Env = {
   Bindings: {
@@ -15,6 +16,8 @@ type Env = {
     CLAWNIFY_TOKEN?: string;
     /** Override the platform agent endpoint — local testing only. */
     CLAWNIFY_AGENTS_URL?: string;
+    /** Override the managed-services host — local testing only. */
+    CLAWNIFY_SERVICES_URL?: string;
   };
 };
 
@@ -354,9 +357,19 @@ app.openapi(deleteMatter, async (c) => {
   if (!(await matterOr404(id))) return c.json({ error: "No such matter" } as never, 404);
 
   // Take the files out of R2 before the rows that name them — a dropped row
-  // would otherwise leave objects nobody can find or bill for.
+  // would otherwise leave objects nobody can find or bill for. Redlines are
+  // stored objects too, and the cascade that removes their rows cannot reach
+  // into the bucket.
   const docs = await query<{ r2_key: string }>("SELECT r2_key FROM documents WHERE matter_id = ?", [id]);
-  await Promise.all(docs.map((d) => c.env.UPLOADS.delete(d.r2_key)));
+  const redlines = await query<{ redline_key: string }>(
+    `SELECT redline_key FROM revisions
+      WHERE redline_key != '' AND document_id IN (SELECT id FROM documents WHERE matter_id = ?)`,
+    [id],
+  );
+  await Promise.all([
+    ...docs.map((d) => c.env.UPLOADS.delete(d.r2_key)),
+    ...redlines.map((r) => c.env.UPLOADS.delete(r.redline_key)),
+  ]);
 
   await run("DELETE FROM matters WHERE id = ?", [id]);
   return c.json({ ok: true } as never);
@@ -512,6 +525,21 @@ app.openapi(extractDocument, async (c) => {
   return c.json(updated as never);
 });
 
+const getDocument = createRoute({
+  method: "get",
+  path: "/api/documents/{id}",
+  tags: ["Documents"],
+  summary: "One document's metadata — not its text",
+  request: { params: z.object({ id: z.string() }) },
+  responses: { 200: ok("The document", DocumentSchema), 404: fail("No such document") },
+});
+
+app.openapi(getDocument, async (c) => {
+  const doc = await get<Record<string, unknown>>("SELECT * FROM documents WHERE id = ?", [c.req.valid("param").id]);
+  if (!doc) return c.json({ error: "No such document" } as never, 404);
+  return c.json(doc as never);
+});
+
 const getDocumentPages = createRoute({
   method: "get",
   path: "/api/documents/{id}/pages",
@@ -610,7 +638,14 @@ app.openapi(deleteDocument, async (c) => {
   const doc = await get<{ r2_key: string }>("SELECT r2_key FROM documents WHERE id = ?", [id]);
   if (!doc) return c.json({ error: "No such document" } as never, 404);
 
-  await c.env.UPLOADS.delete(doc.r2_key);
+  const redlines = await query<{ redline_key: string }>(
+    "SELECT redline_key FROM revisions WHERE document_id = ? AND redline_key != ''",
+    [id],
+  );
+  await Promise.all([
+    c.env.UPLOADS.delete(doc.r2_key),
+    ...redlines.map((r) => c.env.UPLOADS.delete(r.redline_key)),
+  ]);
   await run("DELETE FROM documents WHERE id = ?", [id]);
   return c.json({ ok: true } as never);
 });
@@ -1090,6 +1125,55 @@ app.post("/api/reviews/:id/run", async (c) => {
   return c.json({ dispatched: false, brief, error: result.error, servers: result.servers });
 });
 
+/** Ask the agent to propose changes to a document. Off the OpenAPI surface for
+ *  the same reason as /run — the agent is the target, not a caller. */
+app.post("/api/documents/:id/propose", async (c) => {
+  const id = c.req.param("id");
+  let body: { instruction?: unknown };
+  try {
+    body = (await c.req.json()) as typeof body;
+  } catch {
+    return c.json({ error: "Invalid JSON" }, 400);
+  }
+  const instruction = typeof body.instruction === "string" ? body.instruction.trim() : "";
+  if (!instruction) return c.json({ error: "Say what you want changed" }, 400);
+
+  const doc = await get<{ id: string; name: string; mime: string; extract_status: string }>(
+    "SELECT id, name, mime, extract_status FROM documents WHERE id = ?",
+    [id],
+  );
+  if (!doc) return c.json({ error: "No such document" }, 404);
+  if (!isDocx(doc.name, doc.mime)) {
+    return c.json({ error: "Only Word files can be redlined — a PDF has no revision marks to write" }, 415);
+  }
+
+  const brief = revisionBrief({
+    documentId: id,
+    documentName: doc.name,
+    appUrl: new URL(c.req.url).origin,
+    instruction,
+  });
+
+  const result = await dispatchTask(c.env, {
+    instruction: brief,
+    serverId: await configuredServerId(),
+    // Keyed on the instruction, so asking for something different is a new task
+    // while a double-click is not.
+    idempotencyKey: `revision:${id}:${await digest(instruction)}`,
+  });
+
+  if (result.ok) return c.json({ dispatched: true, brief });
+  return c.json({ dispatched: false, brief, error: result.error, servers: result.servers });
+});
+
+/** Short stable hash of a string, for idempotency keys. */
+async function digest(text: string): Promise<string> {
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(bytes).slice(0, 8))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 const exportReview = createRoute({
   method: "get",
   path: "/api/reviews/{id}/export.csv",
@@ -1146,6 +1230,415 @@ const deleteReview = createRoute({
 
 app.openapi(deleteReview, async (c) => {
   await run("DELETE FROM reviews WHERE id = ?", [c.req.valid("param").id]);
+  return c.json({ ok: true } as never);
+});
+
+// ── Revisions ────────────────────────────────────────────────────────
+//
+// A review reads a contract. A revision changes one — and hands back the change
+// in the format the negotiation actually happens in: a Word file with tracked
+// changes the other side accepts or rejects clause by clause.
+//
+// The verification bargain carries over, one notch stricter. A citation may
+// legitimately match in eight places, because contracts restate the same
+// covenant in every schedule. An *edit* that matches in eight places would
+// rewrite seven clauses nobody read, so an ambiguous anchor is refused here
+// rather than resolved by taking the first hit.
+
+/** One batch of edits is a negotiating position, not a rewrite. */
+const MAX_EDITS = 100;
+/** The redline service's own hard cap; past it, a build cannot still be running. */
+const BUILD_STALE_AFTER = "-5 minutes";
+
+const EditSchema = z
+  .object({
+    id: z.string(),
+    position: z.number().int(),
+    anchor: z.string(),
+    replacement: z.string(),
+    reason: z.string(),
+    page_no: z.number().int().nullable(),
+    status: z.string(),
+    rejected_reason: z.string(),
+  })
+  .openapi("RevisionEdit");
+
+const RevisionSchema = z
+  .object({
+    id: z.string(),
+    document_id: z.string(),
+    name: z.string(),
+    status: z.string(),
+    author: z.string(),
+    revisions_found: z.number().int().nullable(),
+    redline_size: z.number().int(),
+    error: z.string(),
+    created_at: z.string(),
+    updated_at: z.string(),
+    edit_count: z.number().int().optional(),
+  })
+  .openapi("Revision");
+
+const EditInput = z.object({
+  anchor: z
+    .string()
+    .min(1)
+    .openapi({
+      description:
+        "The text this edit replaces, copied verbatim from the document. It must identify exactly one passage — extend it until it does.",
+    }),
+  replacement: z.string().openapi({ description: "What the anchor becomes. Empty deletes it." }),
+  reason: z.string().optional().openapi({ description: "Why, in one line. Shown to the reviewer, not written into the document." }),
+});
+
+const proposeRevision = createRoute({
+  method: "post",
+  path: "/api/documents/{id}/revisions",
+  tags: ["Revisions"],
+  summary: "Propose changes to a document — every anchor is checked for uniqueness",
+  description:
+    "Each edit names the text it replaces, verbatim. The anchor must be locatable in the document AND occur exactly once: an anchor matching twice is stored as 'rejected', because replacing it would silently rewrite a clause nobody chose. Rejections come back with a reason and the accepted edits are still saved, so a retry only re-sends the failures. Nothing is written to the file yet — build the redline when the edits are right.",
+  request: {
+    params: z.object({ id: z.string() }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            name: z.string().optional().openapi({ description: "What this round of changes is, e.g. 'Our position, round 1'" }),
+            author: z.string().optional().openapi({ description: "Shown against every tracked change in Word" }),
+            edits: z.array(EditInput).min(1).max(MAX_EDITS),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    201: ok("Every edit was accepted", z.object({ revision: RevisionSchema, edits: z.array(EditSchema) })),
+    422: ok("At least one anchor failed. The others were still saved.", z.object({ revision: RevisionSchema, edits: z.array(EditSchema) })),
+    404: fail("No such document"),
+    415: fail("Only .docx documents can carry a redline"),
+  },
+});
+
+app.openapi(proposeRevision, async (c) => {
+  const { id } = c.req.valid("param");
+  const body = c.req.valid("json");
+
+  const doc = await get<{ id: string; name: string; mime: string; extract_status: string }>(
+    "SELECT id, name, mime, extract_status FROM documents WHERE id = ?",
+    [id],
+  );
+  if (!doc) return c.json({ error: "No such document" } as never, 404);
+  if (!isDocx(doc.name, doc.mime)) {
+    return c.json(
+      {
+        error: `${doc.name} is not a Word file. Tracked changes are an OOXML feature — a PDF has no revision marks to write, so redline the .docx the PDF was made from.`,
+      } as never,
+      415,
+    );
+  }
+  if (doc.extract_status !== "ready") {
+    return c.json({ error: "This document's text has not been read yet — extract it first" } as never, 422);
+  }
+
+  const pages = await query<PageText>(
+    "SELECT page_no, text FROM document_pages WHERE document_id = ? ORDER BY page_no",
+    [id],
+  );
+
+  const revisionId = uid();
+  await run("INSERT INTO revisions (id, document_id, name, author, created_by) VALUES (?, ?, ?, ?, ?)", [
+    revisionId,
+    id,
+    body.name ?? "",
+    body.author ?? "",
+    user(c)?.id ?? "",
+  ]);
+
+  let anyRejected = false;
+  for (const [i, edit] of body.edits.entries()) {
+    const verdict = verifyAnchor(edit.anchor, pages);
+    if (!verdict.ok) anyRejected = true;
+    await run(
+      `INSERT INTO revision_edits (id, revision_id, position, anchor, replacement, reason, page_no, status, rejected_reason)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uid(),
+        revisionId,
+        i,
+        edit.anchor,
+        edit.replacement,
+        edit.reason ?? "",
+        verdict.ok ? verdict.page : null,
+        verdict.ok ? "proposed" : "rejected",
+        verdict.ok ? "" : verdict.reason,
+      ],
+    );
+  }
+
+  return c.json((await revisionWithEdits(revisionId)) as never, anyRejected ? 422 : 201);
+});
+
+async function revisionWithEdits(id: string) {
+  const revision = await get<Record<string, unknown>>("SELECT * FROM revisions WHERE id = ?", [id]);
+  const edits = await query<Record<string, unknown>>(
+    "SELECT id, position, anchor, replacement, reason, page_no, status, rejected_reason FROM revision_edits WHERE revision_id = ? ORDER BY position",
+    [id],
+  );
+  return { revision, edits };
+}
+
+const listRevisions = createRoute({
+  method: "get",
+  path: "/api/documents/{id}/revisions",
+  tags: ["Revisions"],
+  summary: "The rounds of changes proposed against a document",
+  request: { params: z.object({ id: z.string() }), query: PaginationQuery },
+  responses: {
+    200: ok("A page of revisions", z.object({ revisions: z.array(RevisionSchema), total: z.number().int(), page: z.number().int() })),
+  },
+});
+
+app.openapi(listRevisions, async (c) => {
+  const { id } = c.req.valid("param");
+  const { limit, offset, page } = paginate(c.req.valid("query"));
+  const revisions = await query<Record<string, unknown>>(
+    `SELECT r.*, (SELECT COUNT(*) FROM revision_edits e WHERE e.revision_id = r.id) AS edit_count
+       FROM revisions r WHERE r.document_id = ?
+      ORDER BY r.created_at DESC, r.id LIMIT ? OFFSET ?`,
+    [id, limit, offset],
+  );
+  const total = await countOf("SELECT COUNT(*) AS n FROM revisions WHERE document_id = ?", [id]);
+  return c.json({ revisions, total, page } as never);
+});
+
+const getRevision = createRoute({
+  method: "get",
+  path: "/api/revisions/{id}",
+  tags: ["Revisions"],
+  summary: "One revision with every proposed edit and its verdict",
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: ok("The revision", z.object({ revision: RevisionSchema, edits: z.array(EditSchema) })),
+    404: fail("No such revision"),
+  },
+});
+
+app.openapi(getRevision, async (c) => {
+  const { id } = c.req.valid("param");
+  const found = await revisionWithEdits(id);
+  if (!found.revision) return c.json({ error: "No such revision" } as never, 404);
+  return c.json(found as never);
+});
+
+const setEditStatus = createRoute({
+  method: "patch",
+  path: "/api/revisions/{id}/edits/{edit_id}",
+  tags: ["Revisions"],
+  summary: "Keep or drop one proposed edit",
+  description:
+    "The reviewer's decision, and the reason the edits are a record rather than a job: a proposal set is something a lawyer accepts in part. Only 'proposed' edits go into the redline; excluding one leaves it visible, with its reasoning, rather than deleting it.",
+  request: {
+    params: z.object({ id: z.string(), edit_id: z.string() }),
+    body: { content: { "application/json": { schema: z.object({ include: z.boolean() }) } } },
+  },
+  responses: {
+    200: ok("The revision", z.object({ revision: RevisionSchema, edits: z.array(EditSchema) })),
+    404: fail("No such edit"),
+    409: fail("That edit was rejected — its anchor does not identify one passage"),
+  },
+});
+
+app.openapi(setEditStatus, async (c) => {
+  const { id, edit_id } = c.req.valid("param");
+  const { include } = c.req.valid("json");
+
+  const edit = await get<{ status: string }>("SELECT status FROM revision_edits WHERE id = ? AND revision_id = ?", [
+    edit_id,
+    id,
+  ]);
+  if (!edit) return c.json({ error: "No such edit" } as never, 404);
+  // A rejected edit is not the reviewer's to include: its anchor does not name
+  // one passage, so there is nothing to apply it to.
+  if (edit.status === "rejected") {
+    return c.json({ error: "That edit's anchor does not identify exactly one passage — re-propose it" } as never, 409);
+  }
+
+  await run("UPDATE revision_edits SET status = ? WHERE id = ?", [include ? "proposed" : "excluded", edit_id]);
+  return c.json((await revisionWithEdits(id)) as never);
+});
+
+const buildRevision = createRoute({
+  method: "post",
+  path: "/api/revisions/{id}/build",
+  tags: ["Revisions"],
+  summary: "Produce the Word redline",
+  description:
+    "Applies every kept edit to a copy of the original and compares the two, so the tracked changes are exactly the edits and nothing else. Re-runnable: build again after excluding an edit and the file is replaced. Takes seconds to minutes on a long agreement.",
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: ok("The redline is ready", z.object({ revision: RevisionSchema, edits: z.array(EditSchema) })),
+    404: fail("No such revision"),
+    409: fail("A build is already running"),
+    422: fail("The redline could not be built"),
+  },
+});
+
+app.openapi(buildRevision, async (c) => {
+  const { id } = c.req.valid("param");
+
+  // Checked before anything is read or marked `building` — off-platform there
+  // is no comparer to call, and leaving a revision stuck mid-build to say so
+  // would be a worse answer than saying it now.
+  if (!redlineAvailable(c.env)) {
+    return c.json(
+      {
+        error:
+          "Redlines need the platform's document service, which this deployment cannot reach. The edits are saved — build it once deployed on Clawnify.",
+      } as never,
+      422,
+    );
+  }
+
+  const revision = await get<{ id: string; document_id: string; author: string; status: string; stale: number }>(
+    `SELECT id, document_id, author, status,
+            (updated_at < datetime('now', ?)) AS stale
+       FROM revisions WHERE id = ?`,
+    [BUILD_STALE_AFTER, id],
+  );
+  if (!revision) return c.json({ error: "No such revision" } as never, 404);
+  // Not a real lock — one worker cannot hold one — but it stops the ordinary
+  // double-click. The staleness escape matters more: the service caps itself at
+  // five minutes, so past that the earlier attempt is gone, and without this a
+  // worker that died mid-build would strand the revision as unbuildable.
+  if (revision.status === "building" && !revision.stale) {
+    return c.json({ error: "A build is already running for this revision" } as never, 409);
+  }
+
+  const doc = await get<{ name: string; r2_key: string }>("SELECT name, r2_key FROM documents WHERE id = ?", [
+    revision.document_id,
+  ]);
+  if (!doc) return c.json({ error: "The document this revision belongs to is gone" } as never, 404);
+
+  // Everything the reviewer has not excluded, including edits a previous build
+  // could not apply — the document may have been fixed since.
+  const edits = await query<{ id: string; anchor: string; replacement: string }>(
+    "SELECT id, anchor, replacement FROM revision_edits WHERE revision_id = ? AND status NOT IN ('rejected', 'excluded') ORDER BY position",
+    [id],
+  );
+  if (!edits.length) {
+    return c.json({ error: "Nothing to build — every edit was rejected or excluded" } as never, 422);
+  }
+
+  const object = await c.env.UPLOADS.get(doc.r2_key);
+  if (!object) return c.json({ error: "The stored file is missing" } as never, 422);
+
+  await run("UPDATE revisions SET status = 'building', error = '', updated_at = datetime('now') WHERE id = ?", [id]);
+
+  const result = await buildRedline(c.env, {
+    original: await object.arrayBuffer(),
+    edits: edits.map((e) => ({ anchor: e.anchor, replacement: e.replacement })),
+    author: revision.author || "Open Counsel",
+  });
+
+  // Record what happened to each edit before anything else. Even a failed build
+  // usually knows which anchors it could not apply, and that is the only thing
+  // the caller can act on.
+  await recordVerdicts(edits, result.verdicts);
+
+  if (!result.ok) {
+    await run("UPDATE revisions SET status = 'failed', error = ?, updated_at = datetime('now') WHERE id = ?", [
+      result.error.slice(0, 500),
+      id,
+    ]);
+    return c.json((await revisionWithEdits(id)) as never, 422);
+  }
+
+  // Stored in this app's own bucket, not left behind a presigned link: the
+  // service's URL expires, and a matter has to still have its redline months
+  // from now.
+  const key = `redlines/${revision.document_id}/${id}.docx`;
+  await c.env.UPLOADS.put(key, result.bytes, {
+    httpMetadata: { contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+  });
+
+  await run(
+    `UPDATE revisions SET status = 'ready', redline_key = ?, redline_size = ?, revisions_found = ?,
+            error = '', updated_at = datetime('now') WHERE id = ?`,
+    [key, result.bytes.byteLength, result.revisions, id],
+  );
+
+  return c.json((await revisionWithEdits(id)) as never);
+});
+
+/**
+ * Fold the service's per-edit verdicts back onto the rows they came from.
+ *
+ * Verdicts are positional — the service echoes `index` against the array it was
+ * sent — so they are matched to the same slice, in the same order, that built
+ * the request. An edit the service never reported on is left as it was rather
+ * than guessed at.
+ */
+async function recordVerdicts(edits: { id: string }[], verdicts: EditVerdict[]) {
+  for (const verdict of verdicts) {
+    const edit = edits[verdict.index];
+    if (!edit) continue;
+    await run("UPDATE revision_edits SET status = ?, rejected_reason = ? WHERE id = ?", [
+      verdict.status === "applied" ? "applied" : "unapplied",
+      verdict.status === "applied" ? "" : verdict.reason.slice(0, 300),
+      edit.id,
+    ]);
+  }
+}
+
+const downloadRedline = createRoute({
+  method: "get",
+  path: "/api/revisions/{id}/download",
+  tags: ["Revisions"],
+  summary: "Download the redline as a .docx",
+  description: "A human download — the point of the whole feature is that this opens in Word with tracked changes. Not something to fetch programmatically.",
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: { description: "The redline", content: { "application/octet-stream": { schema: z.any() } } },
+    404: fail("No redline has been built for this revision"),
+  },
+});
+
+app.openapi(downloadRedline, async (c) => {
+  const { id } = c.req.valid("param");
+  const revision = await get<{ redline_key: string; name: string; document_id: string }>(
+    "SELECT redline_key, name, document_id FROM revisions WHERE id = ?",
+    [id],
+  );
+  if (!revision?.redline_key) return c.json({ error: "No redline has been built for this revision" } as never, 404);
+
+  const obj = await c.env.UPLOADS.get(revision.redline_key);
+  if (!obj) return c.json({ error: "The stored redline is missing" } as never, 404);
+
+  const doc = await get<{ name: string }>("SELECT name FROM documents WHERE id = ?", [revision.document_id]);
+  const stem = (doc?.name ?? "document").replace(/\.[^.]+$/, "").replace(/"/g, "");
+  return new Response(obj.body, {
+    headers: {
+      "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "Content-Disposition": `attachment; filename="${stem} - redline.docx"`,
+    },
+  }) as never;
+});
+
+const deleteRevision = createRoute({
+  method: "delete",
+  path: "/api/revisions/{id}",
+  tags: ["Revisions"],
+  summary: "Delete a revision, its edits and its redline",
+  request: { params: z.object({ id: z.string() }) },
+  responses: { 200: ok("Deleted", OkSchema) },
+});
+
+app.openapi(deleteRevision, async (c) => {
+  const { id } = c.req.valid("param");
+  const revision = await get<{ redline_key: string }>("SELECT redline_key FROM revisions WHERE id = ?", [id]);
+  if (revision?.redline_key) await c.env.UPLOADS.delete(revision.redline_key);
+  await run("DELETE FROM revisions WHERE id = ?", [id]);
   return c.json({ ok: true } as never);
 });
 

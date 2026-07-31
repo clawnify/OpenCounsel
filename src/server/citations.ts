@@ -131,6 +131,80 @@ export function verifyQuote(
 }
 
 /**
+ * An anchor is short by nature — "EUR 1,250,000" identifies a fee line exactly.
+ * What makes an anchor safe is uniqueness, not length, so this floor only has to
+ * stop something empty or accidental.
+ */
+export const MIN_ANCHOR_CHARS = 3;
+
+/**
+ * Is `anchor` present in `pages` **exactly once**?
+ *
+ * This is the rule for text that is about to be *rewritten*, and it is stricter
+ * than the one above in the one way that matters. `verifyQuote` accepts a quote
+ * that appears on eight pages, deliberately: a covenant restated in every
+ * schedule is still correctly cited from any of them. An edit against that same
+ * passage is a different act — replacing it would silently rewrite seven other
+ * clauses that nobody read. So a second match fails here, and is never resolved
+ * by taking the first.
+ *
+ * The authoritative check runs later, against the real .docx, because that is
+ * what actually gets edited. This one exists so the failure arrives in the
+ * caller's own loop — with the reason — instead of after a container has spun
+ * up and produced a redline missing half the changes.
+ */
+export function verifyAnchor(anchor: string, pages: PageText[]): VerifyResult {
+  const trimmed = anchor.trim();
+  if (trimmed.length < MIN_ANCHOR_CHARS) {
+    return { ok: false, reason: "anchor is empty — quote the text this edit replaces" };
+  }
+  if (pages.length === 0) {
+    return { ok: false, reason: "document has no extracted text yet — wait for extract_status to be ready" };
+  }
+
+  const needle = fingerprint(trimmed);
+  let count = 0;
+  let firstPage = 0;
+  for (const page of pages) {
+    const hits = occurrences(fingerprint(page.text), needle);
+    if (hits && !firstPage) firstPage = page.page_no;
+    count += hits;
+    if (count > 1) break;
+  }
+
+  if (count === 0) {
+    return {
+      ok: false,
+      reason:
+        "anchor does not appear in this document. Copy it verbatim from a single paragraph — " +
+        "an anchor spanning a paragraph break cannot be replaced in place.",
+    };
+  }
+  if (count > 1) {
+    return {
+      ok: false,
+      reason:
+        "anchor appears more than once, so replacing it would rewrite a clause nobody chose. " +
+        "Extend it — include the clause number or the words either side — until it identifies exactly one passage. " +
+        "Where a schedule restates a clause word for word there may be no unique anchor at all; " +
+        "say so rather than picking one, and let a human make that change by hand.",
+    };
+  }
+  return { ok: true, page: firstPage };
+}
+
+function occurrences(haystack: string, needle: string): number {
+  let count = 0;
+  // Advancing by one rather than by needle.length so an anchor that overlaps
+  // itself still counts as two — that is ambiguous, not a single match.
+  for (let i = haystack.indexOf(needle); i !== -1; i = haystack.indexOf(needle, i + 1)) {
+    count++;
+    if (count > 1) break;
+  }
+  return count;
+}
+
+/**
  * Find the quote, allowing it to straddle a page break.
  *
  * Contract clauses run across pages constantly — a governing-law paragraph

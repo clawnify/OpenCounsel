@@ -3,6 +3,7 @@ import { Briefcase, ListChecks, Scale, Settings2 } from "lucide-react";
 import Matters from "./routes/matters";
 import Matter from "./routes/matter";
 import ReviewGrid from "./routes/review";
+import Redline from "./routes/redline";
 import Workflows from "./routes/workflows";
 import Settings from "./routes/settings";
 
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="/matters" element={<Matters />} />
           <Route path="/matters/:id" element={<Matter />} />
           <Route path="/reviews/:id" element={<ReviewGrid />} />
+          <Route path="/documents/:id/redline" element={<Redline />} />
           <Route path="/workflows" element={<Workflows />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>

@@ -54,12 +54,68 @@ Note `locator_kind` on the document: `page` means real PDF pages; `block` means
 a Word or text file split into numbered blocks. Cite the number the app gave
 you either way.
 
+## Proposing changes to a contract
+
+The other half of the app. A review reads a document; a **revision** changes one
+and produces a Word file with tracked changes the other side can accept or
+reject clause by clause.
+
+Only `.docx` documents. Tracked changes are an OOXML feature — a PDF has no
+revision marks to write, so redline the Word file the PDF came from.
+
+```jsonc
+// POST /api/documents/{id}/revisions
+{
+  "name": "Our position, round 1",
+  "edits": [
+    { "anchor": "the aggregate liability of the Supplier shall be unlimited",
+      "replacement": "the aggregate liability of the Supplier shall not exceed the fees paid in the preceding twelve months",
+      "reason": "Unlimited liability is outside our mandate." }
+  ]
+}
+```
+
+**The anchor must identify exactly one passage.** This is the one rule that is
+*stricter* than citation checking, and the one you will get wrong from good
+instincts. Citing a covenant that appears in four schedules is fine — you read
+it on the page you cited. *Replacing* it would rewrite three clauses nobody
+chose, so a second match is rejected, never applied to the first hit. Include
+the clause number or the words either side until the anchor is unique.
+
+- **Stay inside one paragraph.** An anchor spanning a paragraph break cannot be
+  replaced in place.
+- **To delete a phrase, anchor a neighbouring word too** and give that word back
+  as the replacement: `"Personnel engaged hereunder"` → `"Personnel"`. Matching
+  ignores whitespace, so a bare anchor leaves the spaces that surrounded it.
+- **Change only what was asked for.** Everything you do not anchor comes through
+  byte-identical, and that is what makes the redline readable. Do not rewrite
+  the document.
+
+Rejections come back the same way cells do — 422, per-edit reasons, accepted
+edits still saved, so re-send only the failures:
+
+```jsonc
+{ "revision": { … }, "edits": [
+  { "anchor": "…", "status": "rejected",
+    "rejected_reason": "anchor appears more than once, so replacing it would rewrite a clause nobody chose. …" } ] }
+```
+
+Then **stop and tell the user what you proposed and why.** A human approves the
+edits (`PATCH /api/revisions/{id}/edits/{edit_id}` with `{"include": false}` to
+drop one) and builds the file. `POST /api/revisions/{id}/build` is yours to call
+only if they asked you to go all the way; it takes seconds to minutes and
+returns each edit's final verdict — `applied`, or `unapplied` with a reason.
+
+Never fetch `/api/revisions/{id}/download` — that is the binary, for a human.
+
 ## Pages
 
 - `/matters` — the matter list.
 - `/matters/{id}` — documents and reviews for one matter.
 - `/reviews/{id}` — **the review grid.** Screenshot-friendly; this is the page
   to show a user when reporting that a review is done.
+- `/documents/{id}/redline` — proposed changes and the built redline. Show this
+  when reporting that you have proposed edits.
 - `/workflows` — saved column sets.
 
 ## API anchors

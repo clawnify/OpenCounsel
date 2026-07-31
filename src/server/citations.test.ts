@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalize, verifyQuote, MIN_QUOTE_CHARS } from "./citations.js";
+import { normalize, verifyAnchor, verifyQuote, MIN_QUOTE_CHARS } from "./citations.js";
 
 const pages = [
   { page_no: 1, text: "MUTUAL NON-DISCLOSURE AGREEMENT\n\nThis Agreement is entered into as of 1 March 2026." },
@@ -136,5 +136,69 @@ describe("verifyQuote", () => {
     const r = verifyQuote("the laws of the State of New York", 1, []);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toMatch(/no extracted text/);
+  });
+});
+
+describe("verifyAnchor", () => {
+  // The whole difference from verifyQuote lives here: contracts restate the
+  // same covenant in every schedule, which is fine to *cite* and fatal to
+  // *rewrite*. So the same passage is built twice.
+  const restated = [
+    ...pages,
+    {
+      page_no: 4,
+      text:
+        "SCHEDULE 1\n\n3. Governing Law. This Agreement shall be governed by and construed in\n" +
+        "accordance with the laws of the State of New York, without regard to its\n" +
+        "conflict of laws principles.",
+    },
+  ];
+
+  it("accepts an anchor that names exactly one passage", () => {
+    const result = verifyAnchor("survive for a period of three (3) years", pages);
+    expect(result).toEqual({ ok: true, page: 3 });
+  });
+
+  it("accepts a short anchor when it is unambiguous", () => {
+    // Uniqueness is the guard, not length — "1 March 2026" identifies the
+    // effective date exactly, and demanding a sentence around it would push a
+    // caller towards a vaguer anchor, not a safer one.
+    expect(verifyAnchor("1 March 2026", pages)).toEqual({ ok: true, page: 1 });
+  });
+
+  it("refuses an anchor that appears twice, rather than taking the first", () => {
+    const result = verifyAnchor("the laws of the State of New York", restated);
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.reason).toMatch(/more than once/);
+  });
+
+  it("still accepts that same passage as a citation", () => {
+    // The two rules must diverge exactly here. If verifyQuote were tightened to
+    // match, every correct citation of restated boilerplate would be rejected.
+    expect(verifyQuote("the laws of the State of New York", 2, restated)).toEqual({ ok: true, page: 2 });
+  });
+
+  it("refuses an anchor that is not in the document", () => {
+    const result = verifyAnchor("shall be governed by the laws of Delaware", pages);
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.reason).toMatch(/does not appear/);
+  });
+
+  it("refuses an empty anchor", () => {
+    expect(verifyAnchor("   ", pages).ok).toBe(false);
+  });
+
+  it("matches through the noise the extractor introduces", () => {
+    // Line-wrapped in the source, retyped as one line with a smart quote — a
+    // caller reading the document gets this right and the anchor must survive
+    // it, or verification teaches people to route around it.
+    expect(verifyAnchor("governed by and construed in accordance with the laws", pages)).toEqual({
+      ok: true,
+      page: 2,
+    });
+  });
+
+  it("refuses an anchor before the text has been read", () => {
+    expect(verifyAnchor("the laws of the State of New York", []).ok).toBe(false);
   });
 });

@@ -117,6 +117,59 @@ create table if not exists workflows (
 );
 create index if not exists idx_workflows_created on workflows (created_at desc);
 
+-- A proposed set of changes to one document, and the Word redline it produces.
+--
+-- This is the other half of the app's bargain. A review answers "what does this
+-- contract say"; a revision answers "what should it say instead" — and it has to
+-- leave the negotiation in the format the negotiation actually happens in, which
+-- is a Word file with tracked changes that opposing counsel can accept or reject
+-- clause by clause. A list of suggestions in a web app is not that.
+--
+-- It is a record, not a job: the edits are reviewable before anything is built,
+-- the lawyer decides which ones go in, and the produced file is kept so the
+-- matter still has its redline weeks later. Only .docx documents can carry one —
+-- a PDF has no revision marks to write.
+create table if not exists revisions (
+  id              text primary key,
+  document_id     text not null references documents (id) on delete cascade,
+  name            text not null default '',
+  status          text not null default 'draft',     -- draft | building | ready | failed
+  -- Word shows this against every tracked change; it is who the other side sees.
+  author          text not null default '',
+  redline_key     text not null default '',          -- R2 key of the produced .docx
+  redline_size    integer not null default 0,
+  -- What the comparer counted. Null means it could not tell, which must not look
+  -- the same as zero.
+  revisions_found integer,
+  error           text not null default '',
+  created_by      text not null default '',
+  created_at      text not null default (datetime('now')),
+  updated_at      text not null default (datetime('now'))
+);
+create index if not exists idx_revisions_document on revisions (document_id, created_at desc);
+
+-- One change: replace `anchor` with `replacement`, because `reason`.
+--
+-- status carries both verdicts, which are not the same question:
+--   proposed  — the anchor was located, uniquely, in the extracted text
+--   rejected  — it was not (missing, or matching in more than one place, which
+--               would mean rewriting a clause nobody chose)
+--   excluded  — real, but the reviewer decided against it
+--   applied   — it landed in the actual .docx
+--   unapplied — it did not, and the redline was built without it
+create table if not exists revision_edits (
+  id              text primary key,
+  revision_id     text not null references revisions (id) on delete cascade,
+  position        integer not null default 0,
+  anchor          text not null,
+  replacement     text not null default '',          -- '' deletes the anchor
+  reason          text not null default '',
+  page_no         integer,
+  status          text not null default 'proposed',
+  rejected_reason text not null default ''
+);
+create index if not exists idx_revision_edits on revision_edits (revision_id, position);
+
 -- Which agent runs reviews. A single row by construction: the choice is a
 -- property of the deployment, not of any matter. Left empty when the org has
 -- one agent — the platform resolves it — and only has to be set when there are

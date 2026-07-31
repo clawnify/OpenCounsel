@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { AlertTriangle, FileText, Loader2, Plus, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, FileText, Loader2, PenLine, Plus, Trash2, Upload } from "lucide-react";
 import { api, type Document, type Matter, type ReviewSummary, type Workflow } from "../api";
 import { Badge, Button, Chip, Empty, Field, Input, Modal, Toolbar } from "../components/ui";
 
@@ -151,6 +151,18 @@ export default function MatterPage() {
                       <Loader2 className="size-3 animate-spin" />
                       reading…
                     </Badge>
+                  ) : null}
+                  {/* Only Word files: tracked changes are an OOXML feature, so
+                      offering this on a PDF would be offering a dead end. */}
+                  {d.extract_status === "ready" && isWord(d) ? (
+                    <Link
+                      to={`/documents/${d.id}/redline`}
+                      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-sm px-2 text-sm text-muted hover:bg-sunken hover:text-foreground"
+                      title={`Propose changes to ${d.name}`}
+                    >
+                      <PenLine className="size-4" />
+                      Redline
+                    </Link>
                   ) : null}
                   {d.extract_status === "pending" && !extracting.has(d.id) ? (
                     // Left pending by a dropped connection or a closed tab. The
@@ -335,6 +347,14 @@ function NewReviewModal({
         </div>
       </form>
     </Modal>
+  );
+}
+
+/** Mirrors isDocx on the server — the redline needs a real Word file. */
+function isWord(d: Document): boolean {
+  return (
+    d.mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    d.name.toLowerCase().endsWith(".docx")
   );
 }
 

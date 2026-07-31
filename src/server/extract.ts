@@ -32,6 +32,15 @@ export function isSupported(name: string, mime: string): boolean {
   return detectKind(name, mime) !== null;
 }
 
+/**
+ * A Word file, and so the only kind that can carry a redline. A PDF has no
+ * revision marks to write into: "track changes" is an OOXML feature, not a
+ * property of documents in general.
+ */
+export function isDocx(name: string, mime: string): boolean {
+  return detectKind(name, mime) === "docx";
+}
+
 type Kind = "pdf" | "docx" | "text";
 
 function detectKind(name: string, mime: string): Kind | null {
