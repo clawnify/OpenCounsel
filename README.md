@@ -2,6 +2,8 @@
 
 # Open Counsel
 
+[![Deploy with Clawnify](https://app.clawnify.com/deploy-button.svg)](https://app.clawnify.com/deploy?repo=clawnify/open-counsel)
+
 Matter-scoped document review for legal teams — where a citation is **checked, not promised**.
 
 Upload the contracts, write the questions once, and let your AI agent fill a spreadsheet-style grid across every document. Every answer must carry a quote copied from the source, and the app locates that quote in the document's own text before it will display it as an answer. A quote it cannot find is shown as **unresolved**, never as a result.
