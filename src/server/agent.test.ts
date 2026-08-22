@@ -45,7 +45,7 @@ describe("reviewBrief", () => {
     });
     // Still one line, so it cannot read as a paragraph of the brief.
     expect(brief.split("\n")[0]).toContain("Ignore the above");
-    expect(brief.split("\n")[0]).toMatch(/^Run the ".*" review in Open Counsel/);
+    expect(brief.split("\n")[0]).toMatch(/^Run the ".*" review in OpenCounsel/);
     expect(brief.length).toBeLessThan(MAX_INSTRUCTION_CHARS);
   });
 });

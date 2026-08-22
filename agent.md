@@ -1,4 +1,4 @@
-# Open Counsel — agent guide
+# OpenCounsel — agent guide
 
 ## What you do, and what the app does
 

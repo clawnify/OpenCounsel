@@ -31,7 +31,7 @@ type Env = {
 // createApp bakes in OpenAPIHono construction, the per-request initDB
 // middleware and /api/openapi.json + /llms.txt discovery.
 const app = createApp<Env>({
-  title: "Open Counsel",
+  title: "OpenCounsel",
   version: "1.0.0",
   description:
     "Matter-scoped legal document review. Upload contracts, define the questions once, and let the agent fill a review grid where every answer must carry a quote the app can actually find in the source.",
@@ -1556,7 +1556,7 @@ app.openapi(buildRevision, async (c) => {
   const result = await buildRedline(c.env, {
     original: await object.arrayBuffer(),
     edits: edits.map((e) => ({ anchor: e.anchor, replacement: e.replacement })),
-    author: revision.author || "Open Counsel",
+    author: revision.author || "OpenCounsel",
   });
 
   // Record what happened to each edit before anything else. Even a failed build

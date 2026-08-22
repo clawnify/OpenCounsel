@@ -230,7 +230,7 @@ export function reviewBrief(opts: {
   columnCount: number;
 }): string {
   return [
-    `Run the "${clip(opts.reviewName, MAX_NAME_CHARS)}" review in Open Counsel (${opts.appUrl}).`,
+    `Run the "${clip(opts.reviewName, MAX_NAME_CHARS)}" review in OpenCounsel (${opts.appUrl}).`,
     ``,
     `It covers ${opts.documentCount} document(s) and ${opts.columnCount} column(s).`,
     ``,
@@ -272,7 +272,7 @@ export function revisionBrief(opts: {
   instruction: string;
 }): string {
   return [
-    `Propose changes to "${clip(opts.documentName, MAX_NAME_CHARS)}" in Open Counsel (${opts.appUrl}).`,
+    `Propose changes to "${clip(opts.documentName, MAX_NAME_CHARS)}" in OpenCounsel (${opts.appUrl}).`,
     ``,
     // Fenced and labelled. This is the one part of the instruction a person
     // wrote, and it is the only part that could try to read as something other
