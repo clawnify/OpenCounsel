@@ -1,4 +1,4 @@
--- Open Counsel — schema.
+-- OpenCounsel — schema.
 --
 -- No org_id column anywhere, deliberately: the platform provisions a separate
 -- D1 database per deployed app, so the database itself is the tenant boundary.

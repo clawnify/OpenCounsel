@@ -1,6 +1,6 @@
 # Third-party notices
 
-Open Counsel bundles review column definitions from a third-party project.
+OpenCounsel bundles review column definitions from a third-party project.
 They are redistributed under their own licence, reproduced in full below.
 
 ## Open Legal Products — mike-workflows

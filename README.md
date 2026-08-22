@@ -1,6 +1,6 @@
-<img src="readme-banner.png" alt="Open Counsel" width="100%">
+<img src="readme-banner.png" alt="OpenCounsel" width="100%">
 
-# Open Counsel
+# OpenCounsel
 
 [![Deploy with Clawnify](https://app.clawnify.com/deploy-button.svg)](https://app.clawnify.com/deploy?repo=clawnify/open-counsel)
 
@@ -14,7 +14,7 @@ An open-source app template provided by [Clawnify.com](https://clawnify.com).
 
 Ask any capable model to "review these 40 NDAs and cite your sources" and most of the answers will be right. The problem is the rest: a fluent, plausible answer with a page number attached, quoting a sentence that does not exist. In a diligence pack that is worse than a blank cell, because it survives review — nobody re-reads the clause that already has a citation.
 
-So Open Counsel doesn't ask for citations. It verifies them:
+So OpenCounsel doesn't ask for citations. It verifies them:
 
 ```
 answer + quote + page  →  is that quote really in the text?
