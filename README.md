@@ -2,7 +2,7 @@
 
 # OpenCounsel
 
-[![Deploy with Clawnify](https://app.clawnify.com/deploy-button.svg)](https://app.clawnify.com/deploy?repo=clawnify/open-counsel)
+[![Deploy with Clawnify](https://app.clawnify.com/deploy-button.svg)](https://app.clawnify.com/deploy?repo=clawnify/OpenCounsel)
 
 Matter-scoped document review for legal teams — where a citation is **checked, not promised**.
 
