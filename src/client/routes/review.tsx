@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Bookmark, Download, Loader2, Play, Quote, TriangleAlert } from "lucide-react";
+import { embedded } from "@clawnify/app/client";
 import { api, type Cell, type Document, type Review } from "../api";
 import { Badge, Button, Chip, Empty, Eyebrow, Field, Input, Modal, Toolbar } from "../components/ui";
 
@@ -447,6 +448,26 @@ function CitationModal({
   open: { cell: Cell; document: Document; question: string } | null;
   onClose: () => void;
 }) {
+  const [showPage, setShowPage] = useState(false);
+  const [pageText, setPageText] = useState<string | null>(null);
+  const [pageError, setPageError] = useState("");
+  const pageDoc = open?.document.id;
+  const pageNo = open?.cell.page_no;
+
+  useEffect(() => {
+    setShowPage(false);
+    setPageText(null);
+    setPageError("");
+  }, [pageDoc, pageNo]);
+
+  useEffect(() => {
+    if (!showPage || !pageDoc || !pageNo || pageText !== null) return;
+    api
+      .pages(pageDoc, pageNo, 1)
+      .then((result) => setPageText(result.pages[0]?.text ?? ""))
+      .catch((err) => setPageError((err as Error).message));
+  }, [showPage, pageDoc, pageNo, pageText]);
+
   if (!open) return null;
   const { cell, document: doc, question } = open;
 
@@ -474,6 +495,21 @@ function CitationModal({
           </div>
         ) : null}
 
+        {showPage ? (
+          <div>
+            <Eyebrow right={cell.page_no ? `page ${cell.page_no}` : undefined}>Source text</Eyebrow>
+            {pageError ? (
+              <p className="mt-1 text-[0.8125rem] text-danger">{pageError}</p>
+            ) : pageText === null ? (
+              <p className="mt-1 text-[0.8125rem] text-muted">Loading…</p>
+            ) : (
+              <pre className="mt-1 max-h-72 overflow-auto whitespace-pre-wrap rounded-sm border border-border bg-sunken p-3 font-sans text-[0.8125rem]">
+                {pageText || "This page has no extracted text."}
+              </pre>
+            )}
+          </div>
+        ) : null}
+
         <div className="flex items-center gap-2">
           <Chip>{doc.name}</Chip>
           {cell.status === "answered" ? <Badge tone="success">quote verified in source</Badge> : null}
@@ -481,9 +517,16 @@ function CitationModal({
       </div>
       <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
         <Button onClick={onClose}>Close</Button>
-        <a href={`/api/documents/${doc.id}/file`} target="_blank" rel="noreferrer">
-          <Button variant="primary">Open document</Button>
-        </a>
+        {embedded ? (
+          // New tabs are blocked inside the dashboard, so read the page here.
+          <Button variant="primary" onClick={() => setShowPage(!showPage)} disabled={!cell.page_no}>
+            {showPage ? "Hide page" : "Show page"}
+          </Button>
+        ) : (
+          <a href={`/api/documents/${doc.id}/file`} target="_blank" rel="noreferrer">
+            <Button variant="primary">Open document</Button>
+          </a>
+        )}
       </div>
     </Modal>
   );
